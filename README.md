@@ -1,54 +1,34 @@
 # sf-nvim
 
-A comprehensive Salesforce development toolkit for Neovim, providing seamless integration with the Salesforce CLI and enhanced developer productivity features.
+My personal Salesforce development toolkit for Neovim, built for working on Resource Hero. It's not fancy, but it gets the job done.
 
-## Features
+## What This Does
 
-### Apex Testing
-- **Run Tests**: Execute Apex tests for current class or all tests with visual feedback
-- **Quickfix Integration**: Automatically parse test results and load failures into Neovim's quickfix list
-- **Smart Navigation**: Jump directly to failing test lines with file/line/column accuracy
-- **Automatic File Discovery**: Finds the most recent test results file in a directory
-- **Smart Class File Resolution**: Uses `ripgrep` to locate Apex class files anywhere in your project
+This plugin wraps the Salesforce CLI (`sf`) with some Neovim conveniences:
+- Run Apex tests and see failures in quickfix
+- Deploy/retrieve metadata without leaving Neovim
+- Manage orgs and scratch orgs
+- Execute anonymous Apex
 
-### Apex Development
-- **Anonymous Execution**: Run Apex scripts directly from Neovim with output logging
-- **Test Result Parsing**: Parse JSON test results and populate quickfix with failures only
-
-### Org Management
-- **Org Operations**: Open, list, and display org information
-- **Quick Access**: Fast org switching and browser launching
-
-### Project Deployment
-- **Deploy/Retrieve**: Deploy and retrieve metadata with progress notifications
-- **Validation**: Validate deployments before pushing to production
-- **Quick Deploy**: Fast deployment of previously validated changesets
+Everything runs in terminal splits at the bottom of the screen, so you can see what's actually happening. No magic, just CLI commands in Neovim.
 
 ## Requirements
 
 - Neovim >= 0.7
 - Salesforce CLI (`sf`) installed and configured
 - `ripgrep` (for finding Apex class files)
-- `find` command (standard on Linux/macOS)
-- [nvim-notify](https://github.com/rcarriga/nvim-notify) (for visual feedback and spinners)
 
 ## Installation
 
-### Using [lazy.nvim](https://github.com/folke/lazy.nvim)
+Using lazy.nvim with local development:
 
 ```lua
 {
     'wkuehler/sf-nvim',
-    dependencies = {
-        'rcarriga/nvim-notify',  -- Required for notifications
-    },
     config = function()
         require('sf-nvim').setup({
-            -- Optional: enable default keybindings
             enable_default_keybinds = true,
             leader_prefix = "<leader>s",
-
-            -- Test configuration
             test_results_dir = "test-results",
             test_wait_time = 15,  -- minutes
         })
@@ -56,249 +36,100 @@ A comprehensive Salesforce development toolkit for Neovim, providing seamless in
 }
 ```
 
-### Using [packer.nvim](https://github.com/wbthomason/packer.nvim)
+## Features
 
-```lua
-use {
-    'wkuehler/sf-nvim',
-    requires = { 'rcarriga/nvim-notify' },
-    config = function()
-        require('sf-nvim').setup()
-    end
-}
-```
+### Apex Testing
+- Run tests for current class or all tests
+- Results open in terminal at bottom, press ENTER to close
+- Test failures automatically populate quickfix list
+- Jump directly to failing lines with `:cn` and `:cp`
+- Clear old test results with one command
 
-## Configuration
+### Org Management
+- List and display org info in terminal
+- Set target-org and target-dev-hub with interactive selection
+- Create scratch orgs (picks config file, asks for days/alias)
+- Open org in browser
 
-```lua
-require('sf-nvim').setup({
-    -- Directory where test results are stored (relative to project root)
-    test_results_dir = "test-results",
+### Project Deployment
+- Deploy, retrieve, and validate in terminal splits
+- See real-time output (no background magic)
+- Press ENTER to close when done
 
-    -- Automatically open quickfix window when loading test results
-    auto_open_quickfix = true,
+### Anonymous Apex
+- Execute current file as anonymous Apex
+- Output shown in terminal
 
-    -- Test wait time in minutes
-    test_wait_time = 15,
+## Default Keybindings
 
-    -- Enable default keybindings (see Keybindings section)
-    enable_default_keybinds = false,
+With `enable_default_keybinds = true` and `leader_prefix = "<leader>s"`:
 
-    -- Key prefix for Salesforce commands (if using default keybinds)
-    leader_prefix = "<leader>s",
-})
-```
+**Apex Testing:**
+- `<leader>stc` - Run test for current class (validates .cls extension)
+- `<leader>sta` - Run all Apex tests
+- `<leader>stx` - Clear test results directory
+- `<leader>stl` - Load latest test results into quickfix
+- `<leader>se` - Execute current file as anonymous Apex
 
-## Usage
+**Org Management:**
+- `<leader>soo` - Open org in browser
+- `<leader>sol` - List all orgs
+- `<leader>soi` - Display org info
+- `<leader>soc` - Create scratch org (interactive)
 
-### API Functions
+**Config/Set Defaults:**
+- `<leader>sco` - Set target-org (with selection menu)
+- `<leader>sch` - Set target-dev-hub (with selection menu)
 
-#### Apex Testing
-```lua
-local sf = require('sf-nvim')
+**Project Deployment:**
+- `<leader>spd` - Deploy project
+- `<leader>spr` - Retrieve from org
+- `<leader>spv` - Validate deployment (dry-run)
 
--- Run test for current class (opens quickfix with results)
-sf.apex.run_test()
+## How I Use This
 
--- Run all Apex tests (opens quickfix with results)
-sf.apex.run_all_tests()
+### Running Tests
+1. Open a test class
+2. `<leader>stc` to run tests for current class
+3. Tests run in terminal at bottom, watch the output
+4. Press ENTER when done
+5. Quickfix opens with failures (if any)
+6. `:cn` to jump through failures
 
--- Execute anonymous Apex script from current file
-sf.apex.execute_script()
-```
+### Creating Scratch Orgs
+1. `<leader>soc`
+2. Pick config file from menu
+3. Enter duration in days (default 7)
+4. Enter alias
+5. Watch it create in terminal
 
-#### Test Results / Quickfix
-```lua
--- Load test results from a specific file
-sf.quickfix.load_from_file('/path/to/test-results.json')
+### Deploying
+1. `<leader>spv` to validate (dry-run)
+2. Check output in terminal
+3. Press ENTER to close
+4. `<leader>spd` to actually deploy
+5. Watch it deploy in terminal
 
--- Load the most recent test results from a directory
-sf.quickfix.load_latest('test-results')
+### Switching Orgs
+1. `<leader>sco` to set target-org
+2. Pick from list of orgs
+3. See confirmation message
 
--- Load latest results and open the quickfix window
-sf.quickfix.load_and_open('test-results')
-```
+## Security Note
 
-#### Org Management
-```lua
--- Open default org in browser
-sf.org.open()
+I added some basic sanitization to prevent shell injection when parsing test results. It's not bulletproof, but it's good enough for my use case. Don't use this in untrusted environments.
 
--- List all orgs
-sf.org.list()
+## Known Limitations
 
--- Display org information
-sf.org.display()
+- No async/background execution - everything blocks until complete
+- Test results parsing assumes SF CLI JSON format (will gracefully fail if format changes)
+- Class file finding uses ripgrep with glob patterns (requires standard project structure)
+- No fancy UI - just terminal splits and plain notifications
 
--- Login to org
-sf.org.login_web()
+## Why This Exists
 
--- Logout from org
-sf.org.logout()
-```
-
-#### Project Deployment
-```lua
--- Deploy project to org
-sf.project.deploy()
-
--- Retrieve metadata from org
-sf.project.retrieve()
-
--- Validate deployment (dry-run)
-sf.project.validate()
-
--- Quick deploy a previously validated deployment
-sf.project.quick_deploy("job_id")
-```
-
-### Keybindings
-
-#### Option 1: Use Default Keybindings
-
-Enable in setup:
-```lua
-require('sf-nvim').setup({
-    enable_default_keybinds = true,
-    leader_prefix = "<leader>s",  -- customize prefix
-})
-```
-
-Default keybindings (with `<leader>s` prefix):
-- `<leader>stc` - Run test for current class
-- `<leader>sta` - Run all tests
-- `<leader>se` - Execute Apex script
-- `<leader>stl` - Load latest test results
-- `<leader>so` - Open org in browser
-- `<leader>sl` - List orgs
-- `<leader>si` - Display org info
-- `<leader>sd` - Deploy project
-- `<leader>sr` - Retrieve from org
-- `<leader>sv` - Validate deployment
-
-#### Option 2: Custom Keybindings
-
-Add your own keybindings:
-
-```lua
-local sf = require('sf-nvim')
-
--- Apex testing
-vim.keymap.set('n', '<leader>stc', sf.apex.run_test, { desc = 'Run Apex test for current class' })
-vim.keymap.set('n', '<leader>sta', sf.apex.run_all_tests, { desc = 'Run all Apex tests' })
-vim.keymap.set('n', '<leader>se', sf.apex.execute_script, { desc = 'Execute Apex script' })
-
--- Test results
-vim.keymap.set('n', '<leader>tl', function()
-    sf.quickfix.load_and_open('test-results')
-end, { desc = 'Load latest test results' })
-
--- Org management
-vim.keymap.set('n', '<leader>so', sf.org.open, { desc = 'Open org in browser' })
-vim.keymap.set('n', '<leader>sl', sf.org.list, { desc = 'List orgs' })
-
--- Project deployment
-vim.keymap.set('n', '<leader>sd', sf.project.deploy, { desc = 'Deploy project' })
-vim.keymap.set('n', '<leader>sr', sf.project.retrieve, { desc = 'Retrieve from org' })
-```
-
-### Workflows
-
-#### Running Tests
-
-**Method 1: From Neovim (Recommended)**
-1. Open an Apex test class in Neovim
-2. Press `<leader>stc` to run tests for current class (or `<leader>sta` for all tests)
-3. Wait for the notification spinner to complete
-4. Quickfix window opens automatically with any failures
-5. Navigate through failures using quickfix commands
-
-**Method 2: Manual CLI + Load Results**
-1. Run tests manually: `sf apex run test --result-format json > test-results/mytest.json`
-2. In Neovim, press `<leader>tl` to load latest results into quickfix
-3. Navigate through failures
-
-#### Quickfix Navigation
-
-Standard Neovim quickfix commands:
-- `:cn` or `<C-M-j>` - Next failure
-- `:cp` or `<C-M-k>` - Previous failure
-- `:cc` - Jump to current failure
-- `:copen` - Open quickfix window
-- `:cclose` - Close quickfix window
-
-#### Deployment Workflow
-
-1. Make changes to your Salesforce metadata
-2. Press `<leader>sv` to validate deployment (dry-run)
-3. Review notification for validation results
-4. If validation passes, press `<leader>sd` to deploy
-5. Watch the spinner notification for deployment status
-
-## How It Works
-
-### Test Execution
-1. Plugin runs `sf apex run test` with JSON output format
-2. Results are saved to timestamped files in the `test-results` directory
-3. Notification spinner shows progress during test execution
-4. On completion, results are automatically parsed and loaded into quickfix
-
-### Quickfix Population
-1. Scans for JSON test result files in the specified directory
-2. Parses the Salesforce test results JSON format
-3. For each failed test, uses `ripgrep` to locate the Apex class file
-4. Builds quickfix entries with file path, line number, column, and error message
-5. Populates Neovim's quickfix list with the failures
-6. Tests where the class file cannot be found are logged but not added to quickfix
-
-### Notifications
-- Uses `nvim-notify` for visual feedback
-- Animated spinner during command execution
-- Success/error notifications on completion
-- Non-blocking async execution for all CLI commands
-
-## Example Output
-
-### Quickfix Parsing
-```
-=== Quickfix Parsing Results ===
-File: test-results/MyTestClass_20251115143022.json
-Successfully parsed 2 failure(s)
-
-1. force-app/main/default/classes/MyTestClass.cls:15:1 - testExample: System.AssertException: Assertion Failed
-2. force-app/main/default/classes/MyTestClass.cls:23:5 - testAnotherMethod: System.NullPointerException
-
---- Skipped (class file not found) ---
-1. NonExistentClass.testMethod - Test failed
-
-=================================
-```
-
-### Notification Examples
-- ⏳ "Running MyTestClass..." (with spinner)
-- ✓ "Tests passed. Results saved to test-results/MyTestClass_20251115143022.json"
-- ✗ "Tests failed. Review test-results/MyTestClass_20251115143022.json"
-- ⏳ "Deploying..." (with spinner)
-- ✓ "Deployment succeeded"
-
-## Contributing
-
-Contributions welcome! Feel free to open issues or submit pull requests.
+I got tired of switching between Neovim and terminal to run SF CLI commands. This just wraps the CLI so I can stay in my editor. It's opinionated for my Resource Hero development workflow, not a comprehensive SF tool.
 
 ## License
 
-MIT
-
-## Roadmap
-
-Future features planned:
-- ✅ Run tests directly from Neovim
-- ✅ Org management utilities
-- ✅ Deploy/retrieve integration
-- Test coverage integration and visualization
-- SOQL query execution and result display
-- Metadata search and navigation
-- Debug log viewing and filtering
-- Scratch org creation and management
-- Package development support
-- Conflict resolution helpers
+MIT - do whatever you want with it.

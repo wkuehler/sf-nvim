@@ -1,32 +1,7 @@
--- org.lua
--- Salesforce org management utilities
+-- set-config.lua
+-- Salesforce config management (target-org, target-dev-hub)
 
 local M = {}
-
--- -------------------------------------------------------------
--- Open the default org in browser
--- -------------------------------------------------------------
-function M.open()
-	vim.cmd("botright split | terminal bash -c \"sf org open; echo ''; read -p 'Press ENTER to close...'\"")
-	vim.cmd("startinsert")
-end
-
--- -------------------------------------------------------------
--- List all orgs
--- -------------------------------------------------------------
-function M.list()
-	-- Open in terminal for better output visibility
-	vim.cmd("botright split | terminal bash -c \"sf org list; echo ''; read -p 'Press ENTER to close...'\"")
-	vim.cmd("startinsert")
-end
-
--- -------------------------------------------------------------
--- Display org information
--- -------------------------------------------------------------
-function M.display()
-	vim.cmd("botright split | terminal bash -c \"sf org display; echo ''; read -p 'Press ENTER to close...'\"")
-	vim.cmd("startinsert")
-end
 
 -- -------------------------------------------------------------
 -- Set SF config (target-org or target-dev-hub)
