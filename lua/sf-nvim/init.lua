@@ -1,0 +1,73 @@
+-- init.lua
+-- sf-nvim: Salesforce development utilities for Neovim
+
+local M = {}
+
+-- Load submodules
+M.quickfix = require("sf-nvim.quickfix")
+M.apex = require("sf-nvim.apex")
+M.org = require("sf-nvim.org")
+M.project = require("sf-nvim.project")
+
+-- Default configuration
+local default_config = {
+	-- Directory where test results are stored (relative to project root)
+	test_results_dir = "test-results",
+	-- Automatically open quickfix window when loading test results
+	auto_open_quickfix = true,
+	-- Test wait time in minutes
+	test_wait_time = 15,
+	-- Enable default keybindings
+	enable_default_keybinds = false,
+	-- Key prefix for Salesforce commands (if using default keybinds)
+	leader_prefix = "<leader>s",
+}
+
+-- Plugin configuration
+M.config = {}
+
+-- -------------------------------------------------------------
+-- Setup default keybindings
+-- -------------------------------------------------------------
+local function setup_keybinds()
+	local prefix = M.config.leader_prefix
+
+	-- Apex test keybinds
+	vim.keymap.set("n", prefix .. "tc", M.apex.run_test, { desc = "Run Apex test for current class" })
+	vim.keymap.set("n", prefix .. "ta", M.apex.run_all_tests, { desc = "Run all Apex tests" })
+	vim.keymap.set("n", prefix .. "e", M.apex.execute_script, { desc = "Execute Apex script" })
+
+	-- Quickfix keybinds
+	vim.keymap.set("n", prefix .. "tl", function()
+		M.quickfix.load_and_open(M.config.test_results_dir)
+	end, { desc = "Load latest test results" })
+
+	-- Org keybinds
+	vim.keymap.set("n", prefix .. "o", M.org.open, { desc = "Open org in browser" })
+	vim.keymap.set("n", prefix .. "l", M.org.list, { desc = "List orgs" })
+	vim.keymap.set("n", prefix .. "i", M.org.display, { desc = "Display org info" })
+
+	-- Project keybinds
+	vim.keymap.set("n", prefix .. "d", M.project.deploy, { desc = "Deploy project" })
+	vim.keymap.set("n", prefix .. "r", M.project.retrieve, { desc = "Retrieve from org" })
+	vim.keymap.set("n", prefix .. "v", M.project.validate, { desc = "Validate deployment" })
+end
+
+-- -------------------------------------------------------------
+-- Setup function to configure the plugin
+-- -------------------------------------------------------------
+function M.setup(opts)
+	opts = opts or {}
+	M.config = vim.tbl_deep_extend("force", default_config, opts)
+
+	-- Pass config to submodules
+	M.apex.config.test_results_dir = M.config.test_results_dir
+	M.apex.config.test_wait_time = M.config.test_wait_time
+
+	-- Setup keybinds if enabled
+	if M.config.enable_default_keybinds then
+		setup_keybinds()
+	end
+end
+
+return M

@@ -1,0 +1,12 @@
+# Neovim
+*.swp
+*.swo
+*~
+
+# Test files
+test-results*.json
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
