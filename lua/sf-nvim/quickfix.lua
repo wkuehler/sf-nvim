@@ -8,7 +8,12 @@ local M = {}
 -- -------------------------------------------------------------
 local function find_class_file(class_name)
 	-- Use rg to search for files with the exact class name
-	local handle = io.popen(string.format('rg --files --glob "**/%s.cls" 2>/dev/null', class_name))
+	-- Sanitize class_name to prevent shell injection - remove any shell metacharacters
+	local safe_class_name = class_name:gsub("[^%w_%-]", "")
+	local handle = io.popen(string.format('rg --files --glob "**/%s.cls" 2>/dev/null', safe_class_name))
+	if not handle then
+		return nil
+	end
 	local result = handle:read("*a")
 	handle:close()
 
@@ -34,6 +39,9 @@ local function find_latest_test_results(directory)
 			directory
 		)
 	)
+	if not handle then
+		return nil
+	end
 	local result = handle:read("*a")
 	handle:close()
 
@@ -53,6 +61,12 @@ end
 local function parse_test_results(data)
 	local qf_items = {}
 	local skipped_tests = {}
+
+	-- Validate JSON structure
+	if not data or not data.result or not data.result.tests then
+		vim.notify("Invalid test results format or no tests found", vim.log.levels.WARN)
+		return qf_items, skipped_tests
+	end
 
 	for _, test in ipairs(data.result.tests) do
 		if test.Outcome == "Fail" then

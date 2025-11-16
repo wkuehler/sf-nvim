@@ -8,6 +8,7 @@ M.quickfix = require("sf-nvim.quickfix")
 M.apex = require("sf-nvim.apex")
 M.org = require("sf-nvim.org")
 M.project = require("sf-nvim.project")
+M.setconfig = require("sf-nvim.set-config")
 
 -- Default configuration
 local default_config = {
@@ -33,9 +34,10 @@ local function setup_keybinds()
 	local prefix = M.config.leader_prefix
 
 	-- Apex test keybinds
-	vim.keymap.set("n", prefix .. "tc", M.apex.run_test, { desc = "Run Apex test for current class" })
-	vim.keymap.set("n", prefix .. "ta", M.apex.run_all_tests, { desc = "Run all Apex tests" })
-	vim.keymap.set("n", prefix .. "e", M.apex.execute_script, { desc = "Execute Apex script" })
+	vim.keymap.set("n", prefix .. "tc", M.apex.run_test, { desc = "Tests - Current" })
+	vim.keymap.set("n", prefix .. "ta", M.apex.run_all_tests, { desc = "Tests - All" })
+	vim.keymap.set("n", prefix .. "tx", M.apex.clear_test_results, { desc = "Tests - Clear results directory" })
+	vim.keymap.set("n", prefix .. "e", M.apex.execute_script, { desc = "Execute current class" })
 
 	-- Quickfix keybinds
 	vim.keymap.set("n", prefix .. "tl", function()
@@ -43,14 +45,19 @@ local function setup_keybinds()
 	end, { desc = "Load latest test results" })
 
 	-- Org keybinds
-	vim.keymap.set("n", prefix .. "o", M.org.open, { desc = "Open org in browser" })
-	vim.keymap.set("n", prefix .. "l", M.org.list, { desc = "List orgs" })
-	vim.keymap.set("n", prefix .. "i", M.org.display, { desc = "Display org info" })
+	vim.keymap.set("n", prefix .. "oo", M.org.open, { desc = "Open" })
+	vim.keymap.set("n", prefix .. "ol", M.org.list, { desc = "List" })
+	vim.keymap.set("n", prefix .. "oi", M.org.display, { desc = "Info" })
+	vim.keymap.set("n", prefix .. "oc", M.org.create_scratch_org, { desc = "Create scratch org" })
 
 	-- Project keybinds
-	vim.keymap.set("n", prefix .. "d", M.project.deploy, { desc = "Deploy project" })
-	vim.keymap.set("n", prefix .. "r", M.project.retrieve, { desc = "Retrieve from org" })
-	vim.keymap.set("n", prefix .. "v", M.project.validate, { desc = "Validate deployment" })
+	vim.keymap.set("n", prefix .. "pd", M.project.deploy, { desc = "Deploy" })
+	vim.keymap.set("n", prefix .. "pr", M.project.retrieve, { desc = "Retrieve" })
+	vim.keymap.set("n", prefix .. "pv", M.project.validate, { desc = "Validate" })
+
+	-- Set Config keybinds
+	vim.keymap.set("n", prefix .. "co", M.setconfig.set_target_org, { desc = "Set target-org" })
+	vim.keymap.set("n", prefix .. "ch", M.setconfig.set_target_dev_hub, { desc = "Set target-dev-hub" })
 end
 
 -- -------------------------------------------------------------

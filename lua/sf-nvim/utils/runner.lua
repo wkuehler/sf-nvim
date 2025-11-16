@@ -6,48 +6,16 @@ local M = {}
 local frames = { "|", "/", "-", "\\" }
 
 local function start_spinner(text, title, interval)
-	local notify = require("notify")
-	local uv = vim.uv or vim.loop
-
-	local notif = notify(text, vim.log.levels.INFO, {
-		title = title,
-		icon = frames[1],
-		timeout = false,
-		hide_from_history = true,
-	})
-
-	local frame = 1
-	local active = true
-	local timer = uv.new_timer()
-	timer:start(interval, interval, function()
-		if not active then
-			return
-		end
-		frame = (frame % #frames) + 1
-		vim.schedule(function()
-			if active then
-				notif = notify(text, vim.log.levels.INFO, {
-					title = title,
-					icon = frames[frame],
-					timeout = false,
-					hide_from_history = true,
-					replace = notif,
-				})
-			end
-		end)
-	end)
+	-- Show initial message using plain vim.notify
+	vim.notify(string.format("[%s] %s", title, text), vim.log.levels.INFO)
 
 	local function stop()
-		if not active then
-			return
-		end
-		active = false
-		timer:stop()
-		timer:close()
+		-- No-op for plain vim.notify
 	end
 
 	local function current()
-		return notif
+		-- Return nil since we can't track notifications with plain vim.notify
+		return nil
 	end
 
 	return stop, current
@@ -67,7 +35,6 @@ end
 function M.run(opts)
 	vim.validate({ opts = { opts, "table" }, cmd = { opts.cmd, { "string", "table" } } })
 
-	local notify = require("notify")
 	local title = opts.title or "Task"
 	local running_text = opts.running or "Working..."
 	local interval = opts.interval or 100
@@ -107,15 +74,10 @@ function M.run(opts)
 	local function finalize(code, message_override)
 		stop_spinner()
 		vim.schedule(function()
-			local replace = current_notif()
 			local message = message_override or format_result(code)
 			local level = code == 0 and vim.log.levels.INFO or vim.log.levels.ERROR
-			notify(vim.trim(message), level, {
-				title = title,
-				timeout = timeout,
-				replace = replace,
-				hide_from_history = false,
-			})
+			-- Use plain vim.notify
+			vim.notify(string.format("[%s] %s", title, vim.trim(message)), level)
 			if opts.on_done then
 				opts.on_done(code, message)
 			end
