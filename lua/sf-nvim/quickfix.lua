@@ -28,7 +28,12 @@ local function find_latest_test_results(directory)
 	directory = directory or "."
 
 	-- Use find to get all JSON files with their modification times
-	local handle = io.popen(string.format('find "%s" -maxdepth 1 -name "*.json" -type f -printf "%%T@ %%p\\n" 2>/dev/null | sort -rn | head -1', directory))
+	local handle = io.popen(
+		string.format(
+			'find "%s" -maxdepth 1 -name "*.json" -type f -printf "%%T@ %%p\\n" 2>/dev/null | sort -rn | head -1',
+			directory
+		)
+	)
 	local result = handle:read("*a")
 	handle:close()
 
@@ -125,7 +130,7 @@ function M.load_from_file(filepath)
 
 	local qf_items, skipped_tests = parse_test_results(data)
 	vim.fn.setqflist(qf_items, "r")
-	print_results_summary(qf_items, skipped_tests, filepath)
+	-- print_results_summary(qf_items, skipped_tests, filepath)
 
 	return true
 end
