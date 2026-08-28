@@ -70,6 +70,7 @@ All options with their defaults: >lua
         enable_default_keybinds = false,
         leader_prefix = "<leader>s",
         deploy_on_save = false,
+        tail_notify = true,
     })
 <
                                               *sf-nvim-config.test_results_dir*
@@ -148,6 +149,11 @@ Apex group ~
         visual selection (`'<`,`'>`) is used. The lines are written to a
         temporary `.apex` file which is deleted after the run.
 
+                                                   *sf-nvim-config.tail_notify*
+tail_notify             (boolean, default `true`)
+        Show a |vim.notify()| message for each debug log captured by
+        |:Sf-log-tail|. The counter in |sf-nvim.status()| updates either way.
+
                                                               *:Sf-apex-debug*
 :Sf apex debug
         Run the current file as anonymous Apex in the background
@@ -172,10 +178,20 @@ Log group ~
 
                                                                 *:Sf-log-tail*
 :Sf log tail
-        `sf apex tail log --color` in a terminal split: streams new debug
-        logs as they are written. Creates a trace flag for the running user
-        if none is active (pass through the CLI's default debug level).
-        Close the split to stop tailing.
+        Toggle a background `sf apex tail log`. No window is opened: output
+        accumulates in the hidden `sf://log/tail` buffer (last 5000 lines),
+        each new log increments the counter shown by |sf-nvim.status()| and,
+        with |sf-nvim-config.tail_notify|, posts a notification. Creates a
+        trace flag for the running user if none is active. Run again to
+        stop. An unexpected exit (expired token, etc.) is reported as an
+        error. The process is killed on |VimLeavePre|.
+
+                                                                *:Sf-log-show*
+:Sf log show
+        Open `sf://log/tail` in a split with the cursor at the end, so new
+        output is followed while the window is open; move the cursor up to
+        stop following, `G` to resume. `q` closes the window; the tail
+        keeps running.
 
 SOQL group ~
                                                               *:Sf-soql-buffer*
@@ -263,6 +279,7 @@ with the default prefix `<leader>s`:
     <leader>sll     :Sf log list
     <leader>slr     :Sf log latest
     <leader>slt     :Sf log tail
+    <leader>sls     :Sf log show
     <leader>sqb     :Sf soql buffer
     <leader>sqq     :Sf soql prompt
     <leader>sq      :Sf soql selection          (visual mode)
@@ -427,6 +444,19 @@ require("sf-nvim").setup({opts})
 require("sf-nvim").config
         The effective configuration after |sf-nvim.setup()|.
 
+                                                            *sf-nvim.status()*
+require("sf-nvim").status()
+        Statusline text: the target org alias/username (cached from
+        `sf config get target-org` at |sf-nvim.setup()| and updated by
+        |:Sf-config-org|), then `⏺ N` while |:Sf-log-tail| is running, where
+        N is the number of logs captured. Empty string when nothing is
+        known. Example for lualine: >lua
+
+            { function() return require("sf-nvim").status() end }
+<
+        |User| autocommands `SfTargetChanged` and `SfTailChanged` fire when
+        either part changes.
+
                                                              *sf-nvim.actions*
 require("sf-nvim").actions
         Table of `group -> action -> { fn, desc, key }`. This is the source
@@ -449,6 +479,8 @@ Module functions (all take no arguments unless noted):
     require("sf-nvim.org")
         .open() .list() .display()
         .create_scratch_org()
+        .target                 cached target-org (string|nil)
+        .refresh_target({cb}) .set_target({value})
         .find_scratch_defs()    -> { {label, path}, ... }
 
     require("sf-nvim.project")
@@ -460,7 +492,9 @@ Module functions (all take no arguments unless noted):
         .source_dirs({cwd}) .is_source_file({path}) .source_path_for({path})
 
     require("sf-nvim.logs")
-        .list() .latest() .tail() .open({id})
+        .list() .latest() .open({id})
+        .tail() .tail_start() .tail_stop() .show()
+        .tailing() -> boolean, .tail_count() -> integer
         .debug() .debug_selection({range}) .debug_file({path}, {on_done})
         .parse_run_result({json}) -> SfApexRun|nil
         .render_run({run}) -> lines
@@ -479,6 +513,7 @@ Module functions (all take no arguments unless noted):
 
     require("sf-nvim.utils.runner")
         .term({argv|cmd}, {opts})           terminal split, opts.on_exit(code); see |sf-nvim-terminal|
+        .stream({argv}, {on_line, on_exit}) long-lived process, stdout line by line; :kill() to stop
         .run({argv}, {opts})                async vim.system(); opts.on_exit(code, stdout, stderr)
         .json_async({argv}, {cb}, {opts})   async + JSON decode; cb(data, err)
         .scratch({name, lines, filetype})   read-only result buffer; see |sf-nvim-scratch|

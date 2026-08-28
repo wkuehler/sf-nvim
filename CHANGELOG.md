@@ -7,9 +7,24 @@ tag.
 
 ## Unreleased
 
-### 2026-08-28 — Logs: tail, and no-logs handling
-- `:Sf log tail` (`<leader>slt`): `sf apex tail log --color` in the terminal
-  split; creates a trace flag for the user if none is active.
+### 2026-08-28 — Background log tail and statusline
+- `:Sf log tail` (`<leader>slt`) now toggles `sf apex tail log` in the
+  background (`runner.stream` over `vim.system` with line callbacks) instead
+  of opening a terminal split. Output accumulates in the hidden
+  `sf://log/tail` buffer (last 5000 lines); each log header bumps a counter
+  and, with the new `tail_notify` option (default true), posts a
+  notification. Unexpected exits are reported as errors; the process is
+  killed on `VimLeavePre`.
+- `:Sf log show` (`<leader>sls`): open the tail buffer in a split, following
+  new output while the cursor is on the last line; `q` closes it, the tail
+  keeps running.
+- `require("sf-nvim").status()` for statuslines: target org (cached via
+  `org.refresh_target` at setup and updated by `:Sf config org`) plus
+  `⏺ N` while tailing. `User SfTargetChanged` / `SfTailChanged` events.
+- Tests: `tail_spec` (stream chunking/kill, toggle, counting, hidden buffer,
+  follow-on-append, cap, unexpected exit, target refresh) — 77 total.
+- (Earlier today) `:Sf log tail` first landed as a terminal split; that
+  variant never shipped in a release.
 - `:Sf log latest` no longer opens a buffer containing "No results found"
   (the CLI exits 0 with that text); both it and `list` now warn with
   "No stored debug logs. :Sf log tail creates a trace flag."

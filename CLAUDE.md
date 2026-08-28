@@ -65,7 +65,8 @@ All process execution goes through `utils/runner.lua`, which has three styles:
    (org list → picker → `sf config set`) and `org.open`. Rule of thumb: `term` when the
    user should watch the output, `run` when the plugin consumes it.
    Results that the user reads (logs, query tables) go into `runner.scratch` buffers
-   (`sf://...`, read-only, reused by name).
+   (`sf://...`, read-only, reused by name). `runner.stream` is the long-lived variant
+   (line callbacks + `:kill()`), used only by the background log tail in `logs.lua`.
 3. **`runner.capture(argv)` / `runner.json(argv)`** — synchronous `vim.fn.system`. Only
    `quickfix.find_class_file` (ripgrep) still uses this; keep it for fast local tools.
 

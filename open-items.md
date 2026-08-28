@@ -83,9 +83,9 @@ but built and documented as a single-user tool.
 
 Ranked roughly by how often a Salesforce dev would hit the gap.
 
-- [ ] **Statusline provider.** `require("sf-nvim").status()` → target org
-      alias, cached from `sf config get target-org --json`, refreshed after
-      `:Sf config org`.
+- [x] **Statusline provider.** (2026-08-28) `require("sf-nvim").status()`:
+      cached target org + `⏺ N` while tailing; `User SfTargetChanged` /
+      `SfTailChanged` events.
 - [x] **Debug logs.** (2026-08-28, v0.4.0) `:Sf log list/latest`,
       `:Sf apex debug` (inline log from `sf apex run --json`), `apexlog`
       syntax, `runner.scratch` result buffers.
