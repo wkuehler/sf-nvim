@@ -5,7 +5,9 @@ Progress log for sf-nvim. One entry per milestone (a roadmap item from
 it. Versions follow semver; lazy.nvim users can pin with `version = "*"` or a
 tag.
 
-## Unreleased
+## v0.5.0 — 2026-08-28
+
+**Breaking:** anonymous Apex keys moved to `<leader>sae`/`sad`, `:Sf log latest` to `<leader>slL`. Adds `:Sf test failed`, a `plugin/` startup stub, and which-key group labels.
 
 ### 2026-08-28 — Rerun failed tests, `plugin/` stub
 - `:Sf test failed` (`<leader>stf`): reads the newest results file, collects
