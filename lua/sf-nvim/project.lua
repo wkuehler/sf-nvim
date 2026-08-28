@@ -180,6 +180,22 @@ function M.validate()
 	term_deploy({ "sf", "project", "deploy", "start", "--dry-run" }, "Validate")
 end
 
+---`sf project deploy preview` in a terminal split (what would deploy, conflicts).
+function M.preview_deploy()
+	if not guard.project() then
+		return
+	end
+	runner.term({ "sf", "project", "deploy", "preview" })
+end
+
+---`sf project retrieve preview` in a terminal split.
+function M.preview_retrieve()
+	if not guard.project() then
+		return
+	end
+	runner.term({ "sf", "project", "retrieve", "preview" })
+end
+
 -- -------------------------------------------------------------
 -- Current-file commands (async; failures land in quickfix)
 -- -------------------------------------------------------------

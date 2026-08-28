@@ -1,0 +1,25 @@
+{
+  "status": 0,
+  "result": [
+    {
+      "name": "DailyApiRequests",
+      "max": 15000,
+      "remaining": 14850
+    },
+    {
+      "name": "DataStorageMB",
+      "max": 5,
+      "remaining": 0
+    },
+    {
+      "name": "MassEmail",
+      "max": 0,
+      "remaining": 0
+    },
+    {
+      "name": "Weird",
+      "max": "notanumber"
+    }
+  ],
+  "warnings": []
+}

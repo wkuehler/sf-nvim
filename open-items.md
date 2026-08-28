@@ -94,14 +94,12 @@ Ranked roughly by how often a Salesforce dev would hit the gap.
       subquery summaries, CLI error with caret.
 - [ ] **Code coverage.** `--code-coverage --json` per-class line lists →
       signs/extmarks; `:Sf test coverage` toggle.
-- [ ] **Org lifecycle.** `sf org login web` (alias prompt, `oa`), delete
-      scratch org (confirm, `ox`), `org open` picker for a chosen org (`oO`),
-      `org list limits` (`oL`).
-- [ ] **Metadata generators.** `sf template generate apex class/trigger`,
-      `lightning component` under a `g` prefix (`gc`/`gt`/`gl`); open the
-      created file.
-- [ ] **Deploy/retrieve preview.** `sf project deploy preview` /
-      `retrieve preview` as a pre-flight (`pP`?).
+- [x] **Org lifecycle.** (2026-08-28) `:Sf org login/delete/pick/limits`
+      (`oa`/`ox`/`oO`/`oL`).
+- [x] **Metadata generators.** (2026-08-28) `generate.lua`, `:Sf generate
+      class/trigger/lwc/aura` (`gc`/`gt`/`gl`/`ga`); opens the created file.
+- [x] **Deploy/retrieve preview.** (2026-08-28) `:Sf project preview` /
+      `previewretrieve` (`pp`/`pP`).
 - [x] **Keymap review.** (2026-08-28) Two-key prefix for every group,
       `M.groups` + which-key labels, descriptions tightened.
 - [x] **Filetype detection.** (2026-08-28, v0.4.0) `ftdetect/sf-nvim.lua`;
@@ -109,8 +107,8 @@ Ranked roughly by how often a Salesforce dev would hit the gap.
 - [x] **`plugin/sf-nvim.lua`** (2026-08-28) `:Sf` exists at startup; first use
       runs `setup({})` if needed. `:checkhealth` already worked.
 - [x] **Rerun failed tests** (2026-08-28) `:Sf test failed` / `<leader>stf`.
-- [ ] **LSP guidance** in docs: `apex_ls` via mason + nvim-lspconfig.
-- [ ] packer / vim-plug install examples.
+- [x] **LSP guidance** in docs (2026-08-28): `apex_ls`, `*sf-nvim-lsp*`.
+- [x] packer / vim-plug install examples (2026-08-28).
 
 ## Notes
 

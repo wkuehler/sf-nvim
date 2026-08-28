@@ -5,6 +5,24 @@ Progress log for sf-nvim. One entry per milestone (a roadmap item from
 it. Versions follow semver; lazy.nvim users can pin with `version = "*"` or a
 tag.
 
+## Unreleased
+
+### 2026-08-28 — Org lifecycle, generators, previews, install/LSP docs
+- `:Sf org login` (`soa`): `sf org login web` with alias prompt and
+  `--set-default` offer; `:Sf org delete` (`sox`): scratch-only picker +
+  confirm, `--no-prompt`; `:Sf org pick` (`soO`): open any org;
+  `:Sf org limits` (`soL`): used/max table in `sf://limits`
+  (`org.render_limits`). `org.pick` is the shared picker;
+  `set-config.build_org_items` now tags `scratch`.
+- `lua/sf-nvim/generate.lua`: `:Sf generate class|trigger|lwc|aura`
+  (`sg{c,t,l,a}`) via `sf template generate ... --json`; default output dir
+  from `sfdx-project.json` package dirs; opens the created file.
+- `:Sf project preview` / `previewretrieve` (`spp` / `spP`).
+- README/help: packer and vim-plug examples, `apex_ls` LSP guidance
+  (`*sf-nvim-lsp*`).
+- Fixture `org_limits.json` (hand-built from the live shape). Tests:
+  `org_spec`, `generate_spec` — 94 total.
+
 ## v0.5.0 — 2026-08-28
 
 **Breaking:** anonymous Apex keys moved to `<leader>sae`/`sad`, `:Sf log latest` to `<leader>slL`. Adds `:Sf test failed`, a `plugin/` startup stub, and which-key group labels.

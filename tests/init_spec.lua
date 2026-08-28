@@ -27,7 +27,7 @@ describe("sf-nvim.setup", function()
 		assert.is_not_nil(cmds.Sf)
 
 		assert.same(
-			{ "apex", "config", "log", "org", "project", "soql", "test" },
+			{ "apex", "config", "generate", "log", "org", "project", "soql", "test" },
 			vim.fn.getcompletion("Sf ", "cmdline")
 		)
 		assert.same({ "all", "clear", "current", "failed", "load", "method" }, vim.fn.getcompletion("Sf test ", "cmdline"))

@@ -60,6 +60,26 @@ With lazy.nvim: >lua
 
     { "wkuehler/sf-nvim", opts = { enable_default_keybinds = true } }
 <
+With packer.nvim: >lua
+
+    use({ "wkuehler/sf-nvim", tag = "v*",
+          config = function() require("sf-nvim").setup({}) end })
+<
+With vim-plug: >vim
+
+    Plug 'wkuehler/sf-nvim', { 'tag': 'v*' }
+    lua require("sf-nvim").setup({})
+<
+                                                                 *sf-nvim-lsp*
+sf-nvim does not provide completion or diagnostics. Pair it with the Apex
+language server (`apex-language-server` via mason.nvim, needs Java 11+): >lua
+
+    vim.lsp.config("apex_ls", { apex_enable_semantic_errors = false })
+    vim.lsp.enable("apex_ls")
+<
+On Neovim 0.10 use `require("lspconfig").apex_ls.setup({})` instead. The
+plugin's |sf-nvim-filetypes| set `filetype=apex` for `.cls`/`.trigger`
+inside an SFDX project, which is what `apex_ls` attaches to.
 ==============================================================================
 4. CONFIGURATION                                              *sf-nvim-config*
 
@@ -230,6 +250,23 @@ Org group ~
         (every `config/**/*-scratch-def.json` in the project), duration in
         days (default 7), and an alias; then runs
         `sf org create scratch --definition-file ... --duration-days ... --alias ...`.
+                                                               *:Sf-org-login*
+:Sf org login
+        `sf org login web` in a terminal split. Prompts for an alias
+        (optional) and asks whether to pass `--set-default`. The cached
+        target org is refreshed on success.
+                                                              *:Sf-org-delete*
+:Sf org delete
+        Pick one of the authenticated scratch orgs, confirm, then
+        `sf org delete scratch --target-org {org} --no-prompt` in the
+        background.
+                                                                *:Sf-org-pick*
+:Sf org pick
+        Pick any authenticated org and `sf org open --target-org {org}`.
+                                                              *:Sf-org-limits*
+:Sf org limits
+        `sf org list limits --json` rendered as LIMIT / USED / MAX / USED%
+        in the `sf://limits` scratch buffer (`q` closes).
 
 Config group ~
                                                               *:Sf-config-org*
@@ -269,6 +306,24 @@ Project group ~
 :Sf project validate
         `sf project deploy start --dry-run`, with the same quickfix
         handling as |:Sf-project-deploy|.
+                                                         *:Sf-project-preview*
+:Sf project preview
+        `sf project deploy preview` in a terminal split: what would be
+        deployed, ignored, or is in conflict with the org.
+                                                 *:Sf-project-previewretrieve*
+:Sf project previewretrieve
+        `sf project retrieve preview` in a terminal split.
+
+Generate group ~
+                              *:Sf-generate-class* *:Sf-generate-trigger*
+                                 *:Sf-generate-lwc* *:Sf-generate-aura*
+:Sf generate {class|trigger|lwc|aura}
+        Run `sf template generate apex class|apex trigger|lightning
+        component --type lwc|aura` in the background. Prompts for a name
+        (must be an identifier), the sObject for triggers, and an output
+        directory — defaulting to the first existing
+        `<package>/main/default/{classes|triggers|lwc|aura}` — then edits
+        the created `.cls` / `.trigger` / `.js` / `.cmp`.
 
 ==============================================================================
 6. KEYMAPS                                                   *sf-nvim-keymaps*
@@ -276,7 +331,7 @@ Project group ~
 Installed only when |sf-nvim-config.enable_default_keybinds| is true. Shown
 with the default prefix `<leader>s`. Keys are grouped by a prefix letter:
 `t` tests, `a` anonymous Apex, `l` debug logs, `q` SOQL, `o` org, `c` config,
-`p` project. When which-key.nvim is installed the groups are labelled from
+`p` project, `g` generate. When which-key.nvim is installed the groups are labelled from
 `require("sf-nvim").groups` (a `name -> {prefix, label}` table).
 
     <leader>stc     :Sf test current
@@ -300,6 +355,10 @@ with the default prefix `<leader>s`. Keys are grouped by a prefix letter:
     <leader>sol     :Sf org list
     <leader>soi     :Sf org info
     <leader>soc     :Sf org create
+    <leader>soa     :Sf org login
+    <leader>sox     :Sf org delete
+    <leader>soO     :Sf org pick
+    <leader>soL     :Sf org limits
     <leader>sco     :Sf config org
     <leader>sch     :Sf config hub
     <leader>spf     :Sf project file
@@ -307,6 +366,12 @@ with the default prefix `<leader>s`. Keys are grouped by a prefix letter:
     <leader>spd     :Sf project deploy
     <leader>spr     :Sf project retrieve
     <leader>spv     :Sf project validate
+    <leader>spp     :Sf project preview
+    <leader>spP     :Sf project previewretrieve
+    <leader>sgc     :Sf generate class
+    <leader>sgt     :Sf generate trigger
+    <leader>sgl     :Sf generate lwc
+    <leader>sga     :Sf generate aura
 
 To define your own, leave the option off and map to |:Sf| or to the functions
 in `require("sf-nvim").actions` (see |sf-nvim-api|).

@@ -38,7 +38,49 @@ Run `:checkhealth sf-nvim` to verify all of the above.
 }
 ```
 
-Any plugin manager works — just call `require("sf-nvim").setup({ ... })` once.
+[packer.nvim](https://github.com/wbthomason/packer.nvim):
+
+```lua
+use({
+    "wkuehler/sf-nvim",
+    tag = "v*",
+    config = function()
+        require("sf-nvim").setup({ enable_default_keybinds = true })
+    end,
+})
+```
+
+vim-plug:
+
+```vim
+Plug 'wkuehler/sf-nvim', { 'tag': 'v*' }
+" after plug#end():
+lua require("sf-nvim").setup({ enable_default_keybinds = true })
+```
+
+Any plugin manager works — `:Sf` is registered at startup; call
+`require("sf-nvim").setup({ ... })` once to configure it (keymaps are off
+until you do).
+
+### Language server (optional)
+
+sf-nvim does not provide completion or diagnostics; pair it with the Apex
+language server. With [mason.nvim](https://github.com/williamboman/mason.nvim)
+and [nvim-lspconfig](https://github.com/neovim/nvim-lspconfig):
+
+```lua
+-- :MasonInstall apex-language-server   (needs a Java 11+ runtime)
+vim.lsp.config("apex_ls", {
+    apex_enable_semantic_errors = false,
+    apex_enable_completion_statistics = false,
+})
+vim.lsp.enable("apex_ls")
+```
+
+On Neovim 0.10 use `require("lspconfig").apex_ls.setup({ ... })` instead of
+`vim.lsp.config`/`vim.lsp.enable`. sf-nvim's `ftdetect` sets `filetype=apex`
+for `.cls`/`.trigger` inside an SFDX project, which is what `apex_ls` attaches
+to.
 
 ## Configuration
 
@@ -85,6 +127,10 @@ Everything is available as `:Sf <group> <action>` with tab completion:
 | `:Sf org list` | `sf org list` |
 | `:Sf org info` | `sf org display` |
 | `:Sf org create` | Create a scratch org: pick a `*-scratch-def.json`, enter days and alias |
+| `:Sf org login` | `sf org login web`, with an alias prompt and an offer to set it as default |
+| `:Sf org delete` | Pick a scratch org and delete it (asks first) |
+| `:Sf org pick` | Pick any authenticated org and open it in a browser |
+| `:Sf org limits` | `sf org list limits` as a used/max table in `sf://limits` |
 | `:Sf config org` | Set `target-org` from a picker of authenticated orgs |
 | `:Sf config hub` | Set `target-dev-hub` from a picker of Dev Hubs |
 | `:Sf project file` | Deploy the current file (or its LWC/Aura bundle); errors go to quickfix |
@@ -92,6 +138,9 @@ Everything is available as `:Sf <group> <action>` with tab completion:
 | `:Sf project deploy` | `sf project deploy start`; on failure, errors go to quickfix |
 | `:Sf project retrieve` | `sf project retrieve start` |
 | `:Sf project validate` | `sf project deploy start --dry-run` |
+| `:Sf project preview` | `sf project deploy preview` — what would deploy, and conflicts |
+| `:Sf project previewretrieve` | `sf project retrieve preview` |
+| `:Sf generate class` / `trigger` / `lwc` / `aura` | `sf template generate ...` with name and output-dir prompts; opens the new file |
 
 Full reference: `:help sf-nvim`.
 
@@ -99,7 +148,7 @@ Full reference: `:help sf-nvim`.
 
 With `enable_default_keybinds = true` and the default `leader_prefix = "<leader>s"`.
 Keys are grouped by a prefix letter — `t` tests, `a` anonymous Apex, `l` debug
-logs, `q` SOQL, `o` org, `c` config, `p` project. If
+logs, `q` SOQL, `o` org, `c` config, `p` project, `g` generate. If
 [which-key.nvim](https://github.com/folke/which-key.nvim) is installed, those
 groups are labelled automatically (`require("sf-nvim").groups`).
 
@@ -124,6 +173,10 @@ groups are labelled automatically (`require("sf-nvim").groups`).
 | `<leader>sol` | `:Sf org list` |
 | `<leader>soi` | `:Sf org info` |
 | `<leader>soc` | `:Sf org create` |
+| `<leader>soa` | `:Sf org login` |
+| `<leader>sox` | `:Sf org delete` |
+| `<leader>soO` | `:Sf org pick` |
+| `<leader>soL` | `:Sf org limits` |
 | `<leader>sco` | `:Sf config org` |
 | `<leader>sch` | `:Sf config hub` |
 | `<leader>spf` | `:Sf project file` |
@@ -131,6 +184,12 @@ groups are labelled automatically (`require("sf-nvim").groups`).
 | `<leader>spd` | `:Sf project deploy` |
 | `<leader>spr` | `:Sf project retrieve` |
 | `<leader>spv` | `:Sf project validate` |
+| `<leader>spp` | `:Sf project preview` |
+| `<leader>spP` | `:Sf project previewretrieve` |
+| `<leader>sgc` | `:Sf generate class` |
+| `<leader>sgt` | `:Sf generate trigger` |
+| `<leader>sgl` | `:Sf generate lwc` |
+| `<leader>sga` | `:Sf generate aura` |
 
 To define your own instead, leave `enable_default_keybinds` off and map to the
 `:Sf` commands (or to the functions in `require("sf-nvim").actions`).

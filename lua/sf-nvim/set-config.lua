@@ -14,6 +14,7 @@ local VALID_KEYS = { ["target-org"] = true, ["target-dev-hub"] = true }
 ---@field label string
 ---@field alias string|nil
 ---@field username string
+---@field scratch boolean
 
 ---@param data table decoded JSON from `sf org list --json`
 ---@return SfOrgItem[]
@@ -34,7 +35,12 @@ function M.build_org_items(data)
 				if org.isDefaultDevHubUsername then
 					label = label .. " [default hub]"
 				end
-				table.insert(items, { label = label, alias = org.alias, username = org.username })
+				table.insert(items, {
+					label = label,
+					alias = org.alias,
+					username = org.username,
+					scratch = group == "scratchOrgs",
+				})
 			end
 		end
 	end

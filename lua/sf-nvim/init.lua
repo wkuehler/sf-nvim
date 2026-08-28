@@ -8,6 +8,7 @@ M.apex = require("sf-nvim.apex")
 M.org = require("sf-nvim.org")
 M.project = require("sf-nvim.project")
 M.setconfig = require("sf-nvim.set-config")
+M.generate = require("sf-nvim.generate")
 M.logs = require("sf-nvim.logs")
 M.soql = require("sf-nvim.soql")
 
@@ -204,6 +205,34 @@ M.actions = {
 				M.org.create_scratch_org()
 			end,
 		},
+		login = {
+			key = "oa",
+			desc = "Log in to an org (web flow)",
+			fn = function()
+				M.org.login()
+			end,
+		},
+		delete = {
+			key = "ox",
+			desc = "Delete a scratch org (asks first)",
+			fn = function()
+				M.org.delete_scratch()
+			end,
+		},
+		pick = {
+			key = "oO",
+			desc = "Pick an org and open it in browser",
+			fn = function()
+				M.org.open_pick()
+			end,
+		},
+		limits = {
+			key = "oL",
+			desc = "Show target org limits",
+			fn = function()
+				M.org.limits()
+			end,
+		},
 	},
 	config = {
 		org = {
@@ -255,6 +284,50 @@ M.actions = {
 			desc = "Retrieve current file",
 			fn = function()
 				M.project.retrieve_file()
+			end,
+		},
+		preview = {
+			key = "pp",
+			desc = "Preview what a deploy would change",
+			fn = function()
+				M.project.preview_deploy()
+			end,
+		},
+		previewretrieve = {
+			key = "pP",
+			desc = "Preview what a retrieve would change",
+			fn = function()
+				M.project.preview_retrieve()
+			end,
+		},
+	},
+	generate = {
+		class = {
+			key = "gc",
+			desc = "Generate Apex class",
+			fn = function()
+				M.generate.generate("class")
+			end,
+		},
+		trigger = {
+			key = "gt",
+			desc = "Generate Apex trigger",
+			fn = function()
+				M.generate.generate("trigger")
+			end,
+		},
+		lwc = {
+			key = "gl",
+			desc = "Generate Lightning web component",
+			fn = function()
+				M.generate.generate("lwc")
+			end,
+		},
+		aura = {
+			key = "ga",
+			desc = "Generate Aura component",
+			fn = function()
+				M.generate.generate("aura")
 			end,
 		},
 	},
@@ -365,6 +438,7 @@ M.groups = {
 	org = { prefix = "o", label = "Org" },
 	config = { prefix = "c", label = "Config" },
 	project = { prefix = "p", label = "Project" },
+	generate = { prefix = "g", label = "Generate" },
 }
 
 local function setup_keybinds()
