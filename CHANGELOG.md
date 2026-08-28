@@ -7,6 +7,8 @@ tag.
 
 ## Unreleased
 
+## v0.3.1 — 2026-08-28
+
 ### 2026-08-28 — Scrollable terminal split
 - The terminal split now opens in Normal mode with the cursor on the last
   line, so output is followed as it streams and can be scrolled with ordinary
