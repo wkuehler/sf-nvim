@@ -5,7 +5,9 @@ Progress log for sf-nvim. One entry per milestone (a roadmap item from
 it. Versions follow semver; lazy.nvim users can pin with `version = "*"` or a
 tag.
 
-## Unreleased
+## v0.4.1 — 2026-08-28
+
+Background debug log tail, `:Sf log show`, and a statusline provider.
 
 ### 2026-08-28 — Background log tail and statusline
 - `:Sf log tail` (`<leader>slt`) now toggles `sf apex tail log` in the
