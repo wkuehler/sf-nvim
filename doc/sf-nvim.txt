@@ -170,6 +170,13 @@ Log group ~
         Open the most recent stored log (`sf apex get log --number 1`) in
         `sf://log/latest`.
 
+                                                                *:Sf-log-tail*
+:Sf log tail
+        `sf apex tail log --color` in a terminal split: streams new debug
+        logs as they are written. Creates a trace flag for the running user
+        if none is active (pass through the CLI's default debug level).
+        Close the split to stop tailing.
+
 SOQL group ~
                                                               *:Sf-soql-buffer*
 :Sf soql buffer
@@ -255,6 +262,7 @@ with the default prefix `<leader>s`:
     <leader>sd      :Sf apex debugselection     (visual mode)
     <leader>sll     :Sf log list
     <leader>slr     :Sf log latest
+    <leader>slt     :Sf log tail
     <leader>sqb     :Sf soql buffer
     <leader>sqq     :Sf soql prompt
     <leader>sq      :Sf soql selection          (visual mode)
@@ -347,9 +355,11 @@ followed by a blank line and the full log. The same verdict is shown with
 |vim.notify()|.
 
 |:Sf-log-list| and |:Sf-log-latest| read logs stored in the org, which only
-exist while a trace flag is active for the running user (set one from Setup
-> Debug Logs, or with `sf apex tail log` / the VS Code extension). An empty
-list is reported with a hint to that effect.
+exist while a trace flag is active for the running user. The quickest way
+to get one is |:Sf-log-tail|, which creates the flag and streams logs;
+Setup > Debug Logs works too. With no stored logs both commands warn
+"No stored debug logs. :Sf log tail creates a trace flag." rather than
+opening an empty buffer.
 
 ==============================================================================
 10. SOQL                                                        *sf-nvim-soql*
@@ -450,7 +460,7 @@ Module functions (all take no arguments unless noted):
         .source_dirs({cwd}) .is_source_file({path}) .source_path_for({path})
 
     require("sf-nvim.logs")
-        .list() .latest() .open({id})
+        .list() .latest() .tail() .open({id})
         .debug() .debug_selection({range}) .debug_file({path}, {on_done})
         .parse_run_result({json}) -> SfApexRun|nil
         .render_run({run}) -> lines

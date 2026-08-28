@@ -127,6 +127,13 @@ M.actions = {
 				M.logs.latest()
 			end,
 		},
+		tail = {
+			key = "lt",
+			desc = "Tail debug logs live (creates a trace flag)",
+			fn = function()
+				M.logs.tail()
+			end,
+		},
 	},
 	soql = {
 		buffer = {

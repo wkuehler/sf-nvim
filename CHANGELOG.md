@@ -7,6 +7,13 @@ tag.
 
 ## Unreleased
 
+### 2026-08-28 — Logs: tail, and no-logs handling
+- `:Sf log tail` (`<leader>slt`): `sf apex tail log --color` in the terminal
+  split; creates a trace flag for the user if none is active.
+- `:Sf log latest` no longer opens a buffer containing "No results found"
+  (the CLI exits 0 with that text); both it and `list` now warn with
+  "No stored debug logs. :Sf log tail creates a trace flag."
+
 ## v0.4.0 — 2026-08-28
 
 Debug logs, anonymous Apex with inline log, SOQL runner, filetype detection.

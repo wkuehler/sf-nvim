@@ -74,6 +74,7 @@ Everything is available as `:Sf <group> <action>` with tab completion:
 | `:'<,'>Sf apex debugselection` | Same, for the selected lines |
 | `:Sf log list` | Pick a stored debug log and open it |
 | `:Sf log latest` | Open the most recent debug log |
+| `:Sf log tail` | Stream debug logs live; creates a trace flag for your user if needed |
 | `:Sf soql buffer` | Run the buffer as a SOQL query; results as a table |
 | `:'<,'>Sf soql selection` | Run the selected lines as a SOQL query |
 | `:Sf soql prompt` | Prompt for a query and run it |
@@ -106,6 +107,7 @@ With `enable_default_keybinds = true` and the default `leader_prefix = "<leader>
 | `<leader>sd`  | `:Sf apex debug` (normal) / `:Sf apex debugselection` (visual) |
 | `<leader>sll` | `:Sf log list` |
 | `<leader>slr` | `:Sf log latest` |
+| `<leader>slt` | `:Sf log tail` |
 | `<leader>sqb` | `:Sf soql buffer` |
 | `<leader>sqq` | `:Sf soql prompt` |
 | `<leader>sq`  | `:Sf soql selection` (visual) |
@@ -152,7 +154,9 @@ debug log with `apexlog` highlighting.
 **Debug logs.** `:Sf log list` fetches the org's stored logs into a picker
 (time, operation, status, size, duration, user) and opens the chosen one;
 `:Sf log latest` skips the picker. Logs open in read-only `sf://log/<id>`
-buffers — `q` closes them. Stored logs require a trace flag on your user.
+buffers — `q` closes them. Stored logs only exist while a trace flag is active
+for your user; `:Sf log tail` creates one (and streams logs live in the
+terminal split), after which `list`/`latest` start returning logs.
 
 **SOQL.** Write a query in a `.soql` buffer (or anywhere) and run
 `:Sf soql buffer`, or select the lines and `:'<,'>Sf soql selection`, or

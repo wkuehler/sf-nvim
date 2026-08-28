@@ -5,6 +5,8 @@ local M = {}
 
 local runner = require("sf-nvim.utils.runner")
 
+M.NO_LOGS = "No stored debug logs. :Sf log tail creates a trace flag."
+
 -- -------------------------------------------------------------
 -- Log list
 -- -------------------------------------------------------------
@@ -43,10 +45,7 @@ function M.list()
 		end
 		local items = type(data.result) == "table" and data.result or {}
 		if #items == 0 then
-			vim.notify(
-				data.message or "No debug logs in the org (is a trace flag set for your user?)",
-				vim.log.levels.WARN
-			)
+			vim.notify(data.message or M.NO_LOGS, vim.log.levels.WARN)
 			return
 		end
 		vim.ui.select(items, { prompt = "Debug log:", format_item = M.format_log_item }, function(choice)
@@ -60,6 +59,11 @@ end
 local function show_log(name, stdout, stderr, code)
 	if code ~= 0 then
 		vim.notify("sf apex get log: " .. vim.trim(stderr ~= "" and stderr or stdout), vim.log.levels.ERROR)
+		return
+	end
+	-- `sf apex get log` exits 0 with this text when nothing matches
+	if vim.trim(stdout) == "No results found" then
+		vim.notify(M.NO_LOGS, vim.log.levels.WARN)
 		return
 	end
 	runner.scratch({ name = name, filetype = "apexlog", lines = vim.split(stdout, "\n", { trimempty = true }) })
@@ -88,6 +92,13 @@ function M.latest()
 			show_log("sf://log/latest", stdout, stderr, code)
 		end,
 	})
+end
+
+---Stream logs live in a terminal split. `sf apex tail log` creates a
+---trace flag for the running user if none is active, which is also what
+---makes `list`/`latest` start returning logs.
+function M.tail()
+	runner.term({ "sf", "apex", "tail", "log", "--color" })
 end
 
 -- -------------------------------------------------------------

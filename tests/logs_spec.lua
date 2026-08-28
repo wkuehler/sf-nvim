@@ -67,6 +67,39 @@ describe("logs.render_run", function()
 	end)
 end)
 
+describe("logs.latest / logs.list with no stored logs", function()
+	local runner = require("sf-nvim.utils.runner")
+	local orig, notes
+	before_each(function()
+		orig = { run = runner.run, json_async = runner.json_async, notify = vim.notify }
+		notes = {}
+		vim.notify = function(m, l)
+			table.insert(notes, { m = m, l = l })
+		end
+	end)
+	after_each(function()
+		runner.run, runner.json_async, vim.notify = orig.run, orig.json_async, orig.notify
+	end)
+
+	it("latest warns instead of opening a buffer on 'No results found'", function()
+		runner.run = function(_, opts)
+			opts.on_exit(0, "No results found\n", "")
+		end
+		logs.latest()
+		assert.equals(-1, vim.fn.bufnr("sf://log/latest"))
+		assert.equals(logs.NO_LOGS, notes[#notes].m)
+		assert.equals(vim.log.levels.WARN, notes[#notes].l)
+	end)
+
+	it("list warns on an empty result", function()
+		runner.json_async = function(_, cb)
+			cb({ status = 0, result = {}, warnings = {} }, nil)
+		end
+		logs.list()
+		assert.equals(logs.NO_LOGS, notes[#notes].m)
+	end)
+end)
+
 describe("logs.debug_file", function()
 	it("shows the log in sf://apex-run and notifies", function()
 		local runner = require("sf-nvim.utils.runner")
