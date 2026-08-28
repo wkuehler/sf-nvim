@@ -70,6 +70,13 @@ Everything is available as `:Sf <group> <action>` with tab completion:
 | `:Sf test clear` | Delete saved test results (asks first) |
 | `:Sf apex execute` | Run the current file as anonymous Apex |
 | `:'<,'>Sf apex selection` | Run the selected lines as anonymous Apex |
+| `:Sf apex debug` | Run the current file as anonymous Apex in the background and open its debug log |
+| `:'<,'>Sf apex debugselection` | Same, for the selected lines |
+| `:Sf log list` | Pick a stored debug log and open it |
+| `:Sf log latest` | Open the most recent debug log |
+| `:Sf soql buffer` | Run the buffer as a SOQL query; results as a table |
+| `:'<,'>Sf soql selection` | Run the selected lines as a SOQL query |
+| `:Sf soql prompt` | Prompt for a query and run it |
 | `:Sf org open` | Open the target org in a browser |
 | `:Sf org list` | `sf org list` |
 | `:Sf org info` | `sf org display` |
@@ -96,6 +103,12 @@ With `enable_default_keybinds = true` and the default `leader_prefix = "<leader>
 | `<leader>stl` | `:Sf test load` |
 | `<leader>stx` | `:Sf test clear` |
 | `<leader>se`  | `:Sf apex execute` (normal) / `:Sf apex selection` (visual) |
+| `<leader>sd`  | `:Sf apex debug` (normal) / `:Sf apex debugselection` (visual) |
+| `<leader>sll` | `:Sf log list` |
+| `<leader>slr` | `:Sf log latest` |
+| `<leader>sqb` | `:Sf soql buffer` |
+| `<leader>sqq` | `:Sf soql prompt` |
+| `<leader>sq`  | `:Sf soql selection` (visual) |
 | `<leader>soo` | `:Sf org open` |
 | `<leader>sol` | `:Sf org list` |
 | `<leader>soi` | `:Sf org info` |
@@ -129,8 +142,30 @@ failures) are loaded into quickfix with file, line, column and message — `:cn`
 `:Sf project deploy`. If either fails, the failed components are loaded into
 quickfix from `sf project deploy report`.
 
-**Anonymous Apex.** `:Sf apex execute` runs the whole file; select some lines
-and `:'<,'>Sf apex selection` (or `<leader>se` in visual mode) runs just those.
+**Anonymous Apex.** `:Sf apex execute` runs the whole file in a terminal split;
+select some lines and `:'<,'>Sf apex selection` (or `<leader>se` in visual mode)
+runs just those. `:Sf apex debug` runs in the background instead and opens the
+result in a `sf://apex-run` buffer: a one-line verdict (success, compile error
+with line/column, or the runtime exception and stack) followed by the full
+debug log with `apexlog` highlighting.
+
+**Debug logs.** `:Sf log list` fetches the org's stored logs into a picker
+(time, operation, status, size, duration, user) and opens the chosen one;
+`:Sf log latest` skips the picker. Logs open in read-only `sf://log/<id>`
+buffers — `q` closes them. Stored logs require a trace flag on your user.
+
+**SOQL.** Write a query in a `.soql` buffer (or anywhere) and run
+`:Sf soql buffer`, or select the lines and `:'<,'>Sf soql selection`, or
+`:Sf soql prompt` for a one-off. `//` and `--` comment lines are dropped.
+Results render as an aligned table in `sf://query`, columns in the order you
+selected them; relationship fields flatten to `Owner.Name`, subqueries show as
+`[N rows]`. Query errors show the CLI's message with its caret in the same
+buffer.
+
+**Filetypes.** The plugin registers `soql`, `apex` (`.apex`, plus `.cls` and
+`.trigger` inside an SFDX project), and `apexlog`, and ships syntax
+highlighting for `apexlog`. Bring your own `apex`/`soql` syntax or Tree-sitter
+grammars.
 
 **Scratch orgs.** `:Sf org create` finds every `config/**/*-scratch-def.json`
 in the project and prompts for duration and alias. `:Sf config org` switches

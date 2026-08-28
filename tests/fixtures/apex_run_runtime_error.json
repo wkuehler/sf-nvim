@@ -1,0 +1,19 @@
+{
+  "name": "executeRuntimeFailure",
+  "message": "Execution failed at this code:\n\nSystem.MathException: Divide by 0",
+  "exitCode": 1,
+  "data": {
+    "success": false,
+    "compiled": true,
+    "compileProblem": "",
+    "exceptionMessage": "System.MathException: Divide by 0",
+    "exceptionStackTrace": "AnonymousBlock: line 1, column 1",
+    "line": "1",
+    "column": "1",
+    "logs": "67.0 APEX_CODE,DEBUG;APEX_PROFILING,INFO\nExecute Anonymous: Integer i = 1/0;\n12:12:26.25 (25318717)|EXECUTION_STARTED\n12:12:26.25 (25348057)|CODE_UNIT_STARTED|[EXTERNAL]|execute_anonymous_apex\n12:12:26.25 (25909040)|EXCEPTION_THROWN|[1]|System.MathException: Divide by 0\n12:12:26.25 (26204082)|FATAL_ERROR|System.MathException: Divide by 0\n\nAnonymousBlock: line 1, column 1\n12:12:26.26 (26237682)|CUMULATIVE_LIMIT_USAGE\n12:12:26.26 (26237682)|LIMIT_USAGE_FOR_NS|(default)|\n  Number of SOQL queries: 0 out of 100\n  Number of query rows: 0 out of 50000\n  Number of SOSL queries: 0 out of 20\n  Number of DML statements: 0 out of 150\n  Number of Publish Immediate DML: 0 out of 150\n  Number of DML rows: "
+  },
+  "warnings": [],
+  "code": "executeRuntimeFailure",
+  "status": 1,
+  "commandName": "Run"
+}

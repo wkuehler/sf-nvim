@@ -11,8 +11,11 @@ CONTENTS                                                    *sf-nvim-contents*
     6. Keymaps ................................. |sf-nvim-keymaps|
     7. Test results and quickfix ............... |sf-nvim-quickfix|
     8. The terminal split ...................... |sf-nvim-terminal|
-    9. Lua API ................................. |sf-nvim-api|
-   10. Health check ............................ |sf-nvim-health|
+    9. Debug logs .............................. |sf-nvim-logs|
+   10. SOQL ................................... |sf-nvim-soql|
+   11. Filetypes ............................... |sf-nvim-filetypes|
+   12. Lua API ................................. |sf-nvim-api|
+   13. Health check ............................ |sf-nvim-health|
 
 ==============================================================================
 1. INTRODUCTION                                         *sf-nvim-introduction*
@@ -145,6 +148,41 @@ Apex group ~
         visual selection (`'<`,`'>`) is used. The lines are written to a
         temporary `.apex` file which is deleted after the run.
 
+                                                              *:Sf-apex-debug*
+:Sf apex debug
+        Run the current file as anonymous Apex in the background
+        (`sf apex run -f {file} --json`) and open the result in the
+        `sf://apex-run` buffer. See |sf-nvim-logs|.
+
+                                                     *:Sf-apex-debugselection*
+:{range}Sf apex debugselection
+        Same as |:Sf-apex-debug| for the lines in {range} (default: the last
+        visual selection).
+
+Log group ~
+                                                                *:Sf-log-list*
+:Sf log list
+        `sf apex list log --json` into a picker; the chosen log opens in
+        `sf://log/{id}`. See |sf-nvim-logs|.
+
+                                                              *:Sf-log-latest*
+:Sf log latest
+        Open the most recent stored log (`sf apex get log --number 1`) in
+        `sf://log/latest`.
+
+SOQL group ~
+                                                              *:Sf-soql-buffer*
+:Sf soql buffer
+        Run the whole buffer as a SOQL query. See |sf-nvim-soql|.
+
+                                                           *:Sf-soql-selection*
+:{range}Sf soql selection
+        Run the lines in {range} (default: the last visual selection).
+
+                                                              *:Sf-soql-prompt*
+:Sf soql prompt
+        Ask for a query with |vim.ui.input()| and run it.
+
 Org group ~
                                                                 *:Sf-org-open*
 :Sf org open
@@ -213,6 +251,13 @@ with the default prefix `<leader>s`:
     <leader>stx     :Sf test clear
     <leader>se      :Sf apex execute            (normal mode)
     <leader>se      :Sf apex selection          (visual mode)
+    <leader>sd      :Sf apex debug              (normal mode)
+    <leader>sd      :Sf apex debugselection     (visual mode)
+    <leader>sll     :Sf log list
+    <leader>slr     :Sf log latest
+    <leader>sqb     :Sf soql buffer
+    <leader>sqq     :Sf soql prompt
+    <leader>sq      :Sf soql selection          (visual mode)
     <leader>soo     :Sf org open
     <leader>sol     :Sf org list
     <leader>soi     :Sf org info
@@ -281,7 +326,87 @@ harmful — the keystroke goes to the command's stdin — but the split stays
 open until the command exits. The buffer is wiped when the split closes.
 
 ==============================================================================
-9. LUA API                                                       *sf-nvim-api*
+9. DEBUG LOGS                                                   *sf-nvim-logs*
+
+Logs open in read-only scratch buffers (|sf-nvim-scratch|) with
+'filetype' `apexlog`; the plugin ships a small syntax file that highlights
+timestamps, event names, `USER_DEBUG` lines, exceptions, SOQL/DML events
+and limit usage.
+
+|:Sf-apex-debug| runs anonymous Apex with `--json`, so the log comes back
+inline and no stored log is needed. The `sf://apex-run` buffer starts with
+a verdict line: >
+
+    == Anonymous Apex: success
+    == Compile error at line 1, column 13
+    Unexpected token '('.
+    == Runtime exception: System.MathException: Divide by 0
+       AnonymousBlock: line 1, column 1
+<
+followed by a blank line and the full log. The same verdict is shown with
+|vim.notify()|.
+
+|:Sf-log-list| and |:Sf-log-latest| read logs stored in the org, which only
+exist while a trace flag is active for the running user (set one from Setup
+> Debug Logs, or with `sf apex tail log` / the VS Code extension). An empty
+list is reported with a hint to that effect.
+
+==============================================================================
+10. SOQL                                                        *sf-nvim-soql*
+
+Queries run with `sf data query --query {q} --json` against the target org.
+Before running, buffer lines are joined into one query: lines starting with
+`//` or `--` are dropped, whitespace is collapsed, and a trailing `;` is
+removed.
+
+Results render in the `sf://query` scratch buffer ('filetype' `soqlresult`): >
+
+    -- SELECT Id, Name, Owner.Name, (SELECT Id FROM Contacts) FROM Account
+    -- 2 of 2 row(s)
+    Id                  Name       Owner.Name         Contacts
+    ------------------  ---------  -----------------  --------
+    001000000000000AAA  Account 0  Automated Process
+    001000000000001AAA  Account 1                     [2 rows]
+<
+- Columns follow the order of the SELECT clause; anything the API returned
+  that was not named there (aggregate `expr0` etc.) is appended
+  alphabetically.
+- Relationship fields are flattened with dots (`Owner.Name`).
+- Child subqueries are summarised as `[N rows]`.
+- `null` renders as an empty cell.
+- When the result is truncated (`done == false`) the count line says
+  "(more available)"; add a LIMIT or narrow the query.
+
+A failed query shows the CLI's error — including its caret line pointing at
+the offending column — in the same buffer, and the last line of the message
+with |vim.notify()|.
+
+==============================================================================
+11. FILETYPES                                              *sf-nvim-filetypes*
+
+`ftdetect/sf-nvim.lua` registers with |vim.filetype.add()|:
+
+    .soql               soql
+    .apex               apex
+    .apexlog            apexlog
+    .cls, .trigger      apex — only when an `sfdx-project.json` exists in a
+                        parent directory, so other languages' `.cls` files
+                        are not affected
+
+Only `apexlog` ships with syntax highlighting. For `apex` and `soql`, use
+your preferred syntax plugin or Tree-sitter grammar.
+
+                                                             *sf-nvim-scratch*
+Scratch buffers ~
+
+`sf://apex-run`, `sf://log/{id}`, `sf://log/latest` and `sf://query` are
+'buftype' `nofile`, read-only, and reused by name: running the same action
+again replaces the contents and focuses the existing window instead of
+opening another split. `q` closes the window; the buffer is kept hidden and
+can be reopened with |:buffer|.
+
+==============================================================================
+12. LUA API                                                      *sf-nvim-api*
 
                                                              *sf-nvim.setup()*
 require("sf-nvim").setup({opts})
@@ -324,6 +449,20 @@ Module functions (all take no arguments unless noted):
         .report_deploy({json}, {label}) -> had_failures
         .source_dirs({cwd}) .is_source_file({path}) .source_path_for({path})
 
+    require("sf-nvim.logs")
+        .list() .latest() .open({id})
+        .debug() .debug_selection({range}) .debug_file({path}, {on_done})
+        .parse_run_result({json}) -> SfApexRun|nil
+        .render_run({run}) -> lines
+        .format_log_item({item}) -> string
+
+    require("sf-nvim.soql")
+        .run({query}) .query_buffer() .query_selection({range}) .query_prompt()
+        .normalize({lines}) -> string
+        .select_fields({query}) -> string[]
+        .flatten({record}) -> table<string,string>
+        .render({json}, {query}) -> lines
+
     require("sf-nvim.set-config")
         .set_target_org() .set_target_dev_hub()
         .apply({key}, {org})    `sf config set {key} {org}`, async
@@ -332,6 +471,7 @@ Module functions (all take no arguments unless noted):
         .term({argv|cmd}, {opts})           terminal split, opts.on_exit(code); see |sf-nvim-terminal|
         .run({argv}, {opts})                async vim.system(); opts.on_exit(code, stdout, stderr)
         .json_async({argv}, {cb}, {opts})   async + JSON decode; cb(data, err)
+        .scratch({name, lines, filetype})   read-only result buffer; see |sf-nvim-scratch|
 
     require("sf-nvim.quickfix")
         .load_from_file({path})             -> boolean (had failures)
@@ -340,7 +480,7 @@ Module functions (all take no arguments unless noted):
         .parse_test_results({json}, {find}) -> items, missing
 
 ==============================================================================
-10. HEALTH CHECK                                              *sf-nvim-health*
+13. HEALTH CHECK                                              *sf-nvim-health*
 
 `:checkhealth sf-nvim` reports:
 

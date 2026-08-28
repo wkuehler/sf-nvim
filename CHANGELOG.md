@@ -7,6 +7,36 @@ tag.
 
 ## Unreleased
 
+## v0.4.0 — 2026-08-28
+
+Debug logs, anonymous Apex with inline log, SOQL runner, filetype detection.
+
+### 2026-08-28 — Debug logs and SOQL
+- `runner.scratch({name, lines, filetype})`: read-only result buffers in a
+  bottom split, reused by name, `q` to close. Used by everything below.
+- `:Sf apex debug` / `debugselection` (`<leader>sd`, normal/visual): run
+  anonymous Apex via `sf apex run --json` in the background; the
+  `sf://apex-run` buffer shows a verdict line (success / compile error with
+  line:col / runtime exception + stack) then the full log. Handles the CLI's
+  three payload shapes (`result` on success, `data` under
+  `executeCompileFailure` / `executeRuntimeFailure`).
+- `:Sf log list` (`<leader>sll`): `sf apex list log --json` → picker
+  (time, operation, status, KB, ms, user) → `sf://log/<id>`.
+  `:Sf log latest` (`<leader>slr`): `sf apex get log --number 1`.
+- `:Sf soql buffer` / `selection` / `prompt` (`<leader>sqb` / `sq` visual /
+  `sqq`): `sf data query --json` rendered as an aligned table in
+  `sf://query`. Columns follow the SELECT clause; relationships flatten to
+  `Owner.Name`; subqueries show `[N rows]`; nulls blank; truncation flagged.
+  Errors show the CLI message with its caret line in the buffer.
+- `ftdetect/sf-nvim.lua`: `soql`, `apex` (`.apex`; `.cls`/`.trigger` only
+  under an `sfdx-project.json`), `apexlog`. `syntax/apexlog.vim` ships.
+- Fixtures captured from the real CLI: `apex_run_{success,compile_error,
+  runtime_error}.json`, `query_accounts.json`, `query_error.json`;
+  `apex_log_list.json` hand-built from the documented shape (the dev org had
+  no stored logs). Live-verified: query table, exception verdict + log,
+  latest-log fetch.
+- Tests: `logs_spec`, `soql_spec`, `ftdetect_spec`, scratch spec (67 total).
+
 ## v0.3.1 — 2026-08-28
 
 ### 2026-08-28 — Scrollable terminal split

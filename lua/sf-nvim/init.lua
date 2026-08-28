@@ -8,6 +8,8 @@ M.apex = require("sf-nvim.apex")
 M.org = require("sf-nvim.org")
 M.project = require("sf-nvim.project")
 M.setconfig = require("sf-nvim.set-config")
+M.logs = require("sf-nvim.logs")
+M.soql = require("sf-nvim.soql")
 
 ---@class SfConfig
 ---@field test_results_dir string       directory for test result JSON, relative to cwd
@@ -92,6 +94,61 @@ M.actions = {
 			desc = "Execute selection as anonymous Apex",
 			fn = function(range)
 				M.apex.execute_selection(range)
+			end,
+		},
+		debug = {
+			key = "d",
+			desc = "Run current file as anonymous Apex and show the log",
+			fn = function()
+				M.logs.debug()
+			end,
+		},
+		debugselection = {
+			key = "d",
+			mode = "x",
+			desc = "Run selection as anonymous Apex and show the log",
+			fn = function(range)
+				M.logs.debug_selection(range)
+			end,
+		},
+	},
+	log = {
+		list = {
+			key = "ll",
+			desc = "Pick a debug log and open it",
+			fn = function()
+				M.logs.list()
+			end,
+		},
+		latest = {
+			key = "lr",
+			desc = "Open the most recent debug log",
+			fn = function()
+				M.logs.latest()
+			end,
+		},
+	},
+	soql = {
+		buffer = {
+			key = "qb",
+			desc = "Run buffer as SOQL",
+			fn = function()
+				M.soql.query_buffer()
+			end,
+		},
+		selection = {
+			key = "q",
+			mode = "x",
+			desc = "Run selection as SOQL",
+			fn = function(range)
+				M.soql.query_selection(range)
+			end,
+		},
+		prompt = {
+			key = "qq",
+			desc = "Prompt for a SOQL query",
+			fn = function()
+				M.soql.query_prompt()
 			end,
 		},
 	},

@@ -64,6 +64,8 @@ All process execution goes through `utils/runner.lua`, which has three styles:
    `vim.system()`, callback scheduled on the main loop. Used by `set-config.lua`
    (org list → picker → `sf config set`) and `org.open`. Rule of thumb: `term` when the
    user should watch the output, `run` when the plugin consumes it.
+   Results that the user reads (logs, query tables) go into `runner.scratch` buffers
+   (`sf://...`, read-only, reused by name).
 3. **`runner.capture(argv)` / `runner.json(argv)`** — synchronous `vim.fn.system`. Only
    `quickfix.find_class_file` (ripgrep) still uses this; keep it for fast local tools.
 
@@ -72,8 +74,9 @@ All process execution goes through `utils/runner.lua`, which has three styles:
 `StackTrace`, and resolves `ApexClass.Name` to a path with ripgrep. `parse_test_results`
 takes an injectable file resolver so it can be unit-tested; failures whose class file
 isn't found are reported in the summary notification rather than dropped. This module,
-`project.parse_deploy_result` (`result.files[]`, `state == "Failed"`), and
-`set-config.build_org_items` are the three places coupled to the CLI's JSON shape.
+`project.parse_deploy_result` (`result.files[]`, `state == "Failed"`),
+`logs.parse_run_result` (`result` vs `data`), `soql.render` (`result.records[]`), and
+`set-config.build_org_items` are the places coupled to the CLI's JSON shape.
 
 ## Conventions and gotchas
 

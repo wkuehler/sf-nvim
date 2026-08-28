@@ -86,19 +86,20 @@ Ranked roughly by how often a Salesforce dev would hit the gap.
 - [ ] **Statusline provider.** `require("sf-nvim").status()` → target org
       alias, cached from `sf config get target-org --json`, refreshed after
       `:Sf config org`.
-- [ ] **Debug logs.** `sf apex list log` → picker → `sf apex get log -i` in
-      a scratch buffer (`filetype=apexlog`); "run anonymous Apex then open
-      its log" combo. Biggest VS Code → Neovim gap.
-- [ ] **SOQL runner.** Buffer or selection via `sf data query --json`,
-      rendered as a table in a split; `.soql` files and selections in Apex.
+- [x] **Debug logs.** (2026-08-28, v0.4.0) `:Sf log list/latest`,
+      `:Sf apex debug` (inline log from `sf apex run --json`), `apexlog`
+      syntax, `runner.scratch` result buffers.
+- [x] **SOQL runner.** (2026-08-28, v0.4.0) `:Sf soql buffer/selection/prompt`,
+      table renderer with query-order columns, flattened relationships,
+      subquery summaries, CLI error with caret.
 - [ ] **Code coverage.** `--code-coverage --json` per-class line lists →
       signs/extmarks; `:Sf test coverage` toggle.
 - [ ] **Org lifecycle.** `sf org login web` (alias prompt), delete scratch
       org (confirm), `org open` picker for a chosen org.
 - [ ] **Metadata generators.** `sf apex generate class/trigger`,
       `sf lightning generate component`; open the created file.
-- [ ] **Filetype detection.** `ftdetect/` for `.cls`, `.trigger`, `.apex`,
-      `.soql` — Neovim ships none; prerequisite for ft-based autocmds.
+- [x] **Filetype detection.** (2026-08-28, v0.4.0) `ftdetect/sf-nvim.lua`;
+      `.cls`/`.trigger` claimed only inside an SFDX project.
 - [ ] **`plugin/sf-nvim.lua`** so `:Sf` and `:checkhealth` exist without an
       explicit `setup()`.
 - [ ] **Rerun failed tests** from the last results file (`:Sf test failed`).

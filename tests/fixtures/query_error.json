@@ -1,0 +1,9 @@
+{
+  "name": "INVALID_TYPE",
+  "message": "\nSELECT Id FROM Nope__c\n               ^\nERROR at Row:1:Column:16\nsObject type 'Nope__c' is not supported. If you are attempting to use a custom object, be sure to append the '__c' after the entity name. Please reference your WSDL or the describe call for the appropriate names.",
+  "exitCode": 1,
+  "warnings": [],
+  "code": "1",
+  "status": 1,
+  "commandName": "DataSoqlQueryCommand"
+}

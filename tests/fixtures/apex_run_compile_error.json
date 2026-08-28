@@ -1,0 +1,19 @@
+{
+  "name": "executeCompileFailure",
+  "message": "Compilation failed at Line 1 column 13 with the error:\n\nUnexpected token '('.",
+  "exitCode": 1,
+  "data": {
+    "success": false,
+    "compiled": false,
+    "compileProblem": "Unexpected token '('.",
+    "exceptionMessage": "",
+    "exceptionStackTrace": "",
+    "line": "1",
+    "column": "13",
+    "logs": ""
+  },
+  "warnings": [],
+  "code": "executeCompileFailure",
+  "status": 1,
+  "commandName": "Run"
+}

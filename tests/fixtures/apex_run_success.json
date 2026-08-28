@@ -1,0 +1,14 @@
+{
+  "status": 0,
+  "result": {
+    "success": true,
+    "compiled": true,
+    "compileProblem": "",
+    "exceptionMessage": "",
+    "exceptionStackTrace": "",
+    "line": -1,
+    "column": -1,
+    "logs": "67.0 APEX_CODE,DEBUG;APEX_PROFILING,INFO\nExecute Anonymous: System.debug('sf-nvim probe');\nExecute Anonymous: Integer n = [SELECT COUNT() FROM Account];\nExecute Anonymous: System.debug('accounts=' + n);\n12:11:58.21 (21120892)|EXECUTION_STARTED\n12:11:58.21 (21133692)|CODE_UNIT_STARTED|[EXTERNAL]|execute_anonymous_apex\n12:11:58.21 (21517196)|USER_DEBUG|[1]|DEBUG|sf-nvim probe\n12:11:58.21 (34361213)|USER_DEBUG|[3]|DEBUG|accounts=1\n12:11:58.34 (34466534)|CUMULATIVE_LIMIT_USAGE\n12:11:58.34 (34466534)|LIMIT_USAGE_FOR_NS|(default)|\n  Number of SOQL queries: 0 out of 100\n  Number of query rows: 0 out of 50000\n  Number of SOSL queries: 0 out of 20\n  Number of DML statements: 0 out of 150\n  Number of Publish Immediate DML: 0 out of 150\n  Number of DML rows: 0 out of 10000\n  Maximum CPU time: 0 out of 10000\n  Maximum heap size: 0 out of 6000000\n  Number of callouts: 0 out of 100\n  Number of Email I\n12:11:58.21 (34579295)|EXECUTION_FINISHED\n"
+  },
+  "warnings": []
+}

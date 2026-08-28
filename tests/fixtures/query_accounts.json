@@ -1,0 +1,61 @@
+{
+  "status": 0,
+  "result": {
+    "records": [
+      {
+        "attributes": {
+          "type": "Account",
+          "url": "/services/data/v67.0/sobjects/Account/001000000000000AAA"
+        },
+        "Id": "001000000000000AAA",
+        "Name": "Account 0",
+        "Owner": {
+          "attributes": {
+            "type": "User",
+            "url": "/services/data/v67.0/sobjects/User/005000000000001AAA"
+          },
+          "Name": "Automated Process"
+        },
+        "Contacts": null
+      },
+      {
+        "attributes": {
+          "type": "Account",
+          "url": "/services/data/v67.0/sobjects/Account/001000000000001AAA"
+        },
+        "Id": "001000000000001AAA",
+        "Name": "Account 1",
+        "Owner": {
+          "attributes": {
+            "type": "User",
+            "url": "/services/data/v67.0/sobjects/User/005000000000001AAA"
+          },
+          "Name": null
+        },
+        "Contacts": {
+          "totalSize": 2,
+          "done": true,
+          "records": [
+            {
+              "attributes": {
+                "type": "Contact",
+                "url": "/x"
+              },
+              "Id": "003000000000001AAA"
+            },
+            {
+              "attributes": {
+                "type": "Contact",
+                "url": "/y"
+              },
+              "Id": "003000000000002AAA"
+            }
+          ]
+        }
+      }
+    ],
+    "totalSize": 2,
+    "done": true
+  },
+  "warnings": []
+}

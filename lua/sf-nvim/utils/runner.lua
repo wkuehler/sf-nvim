@@ -148,6 +148,53 @@ function M.json_async(argv, cb, opts)
 end
 
 -- -------------------------------------------------------------
+-- Show text in a scratch buffer in a bottom split. A buffer with the
+-- same name is reused (and its window focused) so repeated runs
+-- replace the previous result instead of piling up splits.
+-- -------------------------------------------------------------
+---@class SfScratchOpts
+---@field name string        buffer name, e.g. "sf://query"
+---@field lines string[]
+---@field filetype? string
+---@field position? string   window command prefix (default "botright")
+
+---@param opts SfScratchOpts
+---@return integer bufnr
+function M.scratch(opts)
+	local bufnr = vim.fn.bufnr(opts.name)
+	if bufnr == -1 then
+		bufnr = vim.api.nvim_create_buf(false, true)
+		vim.api.nvim_buf_set_name(bufnr, opts.name)
+		vim.bo[bufnr].buftype = "nofile"
+		vim.bo[bufnr].bufhidden = "hide"
+		vim.bo[bufnr].swapfile = false
+		vim.keymap.set(
+			"n",
+			"q",
+			"<Cmd>close<CR>",
+			{ buffer = bufnr, nowait = true, silent = true, desc = "sf-nvim: close" }
+		)
+	end
+	if opts.filetype then
+		vim.bo[bufnr].filetype = opts.filetype
+	end
+	vim.bo[bufnr].modifiable = true
+	vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, opts.lines)
+	vim.bo[bufnr].modifiable = false
+	vim.bo[bufnr].modified = false
+
+	local win = vim.fn.bufwinid(bufnr)
+	if win == -1 then
+		vim.cmd((opts.position or "botright") .. " split")
+		vim.api.nvim_win_set_buf(0, bufnr)
+	else
+		vim.api.nvim_set_current_win(win)
+	end
+	vim.api.nvim_win_set_cursor(0, { 1, 0 })
+	return bufnr
+end
+
+-- -------------------------------------------------------------
 -- Run a command synchronously and capture its output.
 -- Blocks the UI: reserve for fast local tools. Prefer an argv
 -- list: it bypasses the shell entirely.

@@ -1,0 +1,42 @@
+{
+  "status": 0,
+  "result": [
+    {
+      "Id": "07L000000000001AAA",
+      "Application": "Unknown",
+      "DurationMilliseconds": 34,
+      "Location": "Monitoring",
+      "LogLength": 12345,
+      "LogUser": {
+        "attributes": {
+          "type": "Name",
+          "url": "/services/data/v67.0/sobjects/User/005000000000001AAA"
+        },
+        "Name": "Dev User"
+      },
+      "Operation": "Api/ExecuteAnonymous",
+      "Request": "Api",
+      "StartTime": "2026-08-28T16:11:58.000+0000",
+      "Status": "Success"
+    },
+    {
+      "Id": "07L000000000002AAA",
+      "Application": "Browser",
+      "DurationMilliseconds": 1502,
+      "Location": "SystemLog",
+      "LogLength": 204800,
+      "LogUser": {
+        "attributes": {
+          "type": "Name",
+          "url": "/services/data/v67.0/sobjects/User/005000000000001AAA"
+        },
+        "Name": "Dev User"
+      },
+      "Operation": "/aura",
+      "Request": "Application",
+      "StartTime": "2026-08-28T16:10:02.000+0000",
+      "Status": "System.LimitException: Too many SOQL queries: 101"
+    }
+  ],
+  "warnings": []
+}
