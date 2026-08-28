@@ -60,6 +60,13 @@ M.actions = {
 				M.apex.run_all_tests()
 			end,
 		},
+		failed = {
+			key = "tf",
+			desc = "Rerun tests that failed last run",
+			fn = function()
+				M.apex.run_failed_tests()
+			end,
+		},
 		clear = {
 			key = "tx",
 			desc = "Delete saved test result files",
@@ -328,6 +335,11 @@ local function sf_complete(arglead, cmdline, _)
 	end, candidates)
 end
 
+---`:Sf` handler and completion, exported so `plugin/sf-nvim.lua` can register
+---the command before `setup()` has run.
+M._command = sf_command
+M._complete = sf_complete
+
 local function setup_commands()
 	vim.api.nvim_create_user_command("Sf", sf_command, {
 		nargs = "+",
@@ -384,6 +396,7 @@ function M.setup(opts)
 		return
 	end
 	M.config = vim.tbl_deep_extend("force", vim.deepcopy(default_config), opts or {})
+	M.did_setup = true
 
 	M.apex.config.test_results_dir = M.config.test_results_dir
 	M.apex.config.test_wait_time = M.config.test_wait_time

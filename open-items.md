@@ -106,9 +106,9 @@ Ranked roughly by how often a Salesforce dev would hit the gap.
       `M.groups` + which-key labels, descriptions tightened.
 - [x] **Filetype detection.** (2026-08-28, v0.4.0) `ftdetect/sf-nvim.lua`;
       `.cls`/`.trigger` claimed only inside an SFDX project.
-- [ ] **`plugin/sf-nvim.lua`** so `:Sf` and `:checkhealth` exist without an
-      explicit `setup()`.
-- [ ] **Rerun failed tests** from the last results file (`:Sf test failed`).
+- [x] **`plugin/sf-nvim.lua`** (2026-08-28) `:Sf` exists at startup; first use
+      runs `setup({})` if needed. `:checkhealth` already worked.
+- [x] **Rerun failed tests** (2026-08-28) `:Sf test failed` / `<leader>stf`.
 - [ ] **LSP guidance** in docs: `apex_ls` via mason + nvim-lspconfig.
 - [ ] packer / vim-plug install examples.
 

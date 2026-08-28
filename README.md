@@ -67,6 +67,7 @@ Everything is available as `:Sf <group> <action>` with tab completion:
 | `:Sf test current` | Run tests for the current `.cls`; failures go to quickfix |
 | `:Sf test method` | Run only the `@IsTest` method under the cursor |
 | `:Sf test all` | Run the whole Apex test suite |
+| `:Sf test failed` | Rerun only the methods that failed in the latest saved results |
 | `:Sf test load` | Load the most recent saved results into quickfix |
 | `:Sf test clear` | Delete saved test results (asks first) |
 | `:Sf apex execute` | Run the current file as anonymous Apex |
@@ -107,6 +108,7 @@ groups are labelled automatically (`require("sf-nvim").groups`).
 | `<leader>stc` | `:Sf test current` |
 | `<leader>stm` | `:Sf test method` |
 | `<leader>sta` | `:Sf test all` |
+| `<leader>stf` | `:Sf test failed` |
 | `<leader>stl` | `:Sf test load` |
 | `<leader>stx` | `:Sf test clear` |
 | `<leader>sae`  | `:Sf apex execute` (normal) / `:Sf apex selection` (visual) |

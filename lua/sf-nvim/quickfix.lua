@@ -91,6 +91,50 @@ function M.parse_test_results(data, find_file)
 end
 
 -- -------------------------------------------------------------
+-- List the failing tests of a run as `Class.method` names
+-- -------------------------------------------------------------
+---@param data table  decoded JSON from `sf apex run test --json`
+---@return string[]   sorted, de-duplicated `Class.method` for Fail/CompileFail
+function M.failed_tests(data)
+	local seen, out = {}, {}
+	if type(data) ~= "table" or type(data.result) ~= "table" or type(data.result.tests) ~= "table" then
+		return out
+	end
+	for _, test in ipairs(data.result.tests) do
+		if test.Outcome == "Fail" or test.Outcome == "CompileFail" then
+			local class_name = test.ApexClass and test.ApexClass.Name
+			if class_name and test.MethodName then
+				local name = class_name .. "." .. test.MethodName
+				if not seen[name] then
+					seen[name] = true
+					table.insert(out, name)
+				end
+			end
+		end
+	end
+	table.sort(out)
+	return out
+end
+
+---Read and decode a results file. Returns nil (no notification) when the file
+---is missing or not JSON.
+---@param filepath string
+---@return table|nil
+function M.read_results(filepath)
+	local f = io.open(filepath, "r")
+	if not f then
+		return nil
+	end
+	local content = f:read("*all")
+	f:close()
+	local ok, data = pcall(vim.json.decode, content)
+	if ok and type(data) == "table" then
+		return data
+	end
+	return nil
+end
+
+-- -------------------------------------------------------------
 -- Summarise a parsed run for the user
 -- -------------------------------------------------------------
 local function notify_summary(data, qf_items, skipped_tests)
@@ -122,16 +166,12 @@ end
 ---@param filepath string
 ---@return boolean ok
 function M.load_from_file(filepath)
-	local f = io.open(filepath, "r")
-	if not f then
+	if vim.fn.filereadable(filepath) == 0 then
 		vim.notify("Could not open test results: " .. filepath, vim.log.levels.ERROR)
 		return false
 	end
-	local content = f:read("*all")
-	f:close()
-
-	local ok, data = pcall(vim.json.decode, content)
-	if not ok or type(data) ~= "table" then
+	local data = M.read_results(filepath)
+	if not data then
 		vim.notify("Failed to parse JSON from " .. filepath, vim.log.levels.ERROR)
 		return false
 	end

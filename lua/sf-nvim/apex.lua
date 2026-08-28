@@ -24,19 +24,21 @@ M.config = {
 -- Run tests (all, or a single class) in a terminal split and
 -- load failures into quickfix when the run finishes.
 -- -------------------------------------------------------------
----@param class_name? string  nil runs the whole suite
-local function run_tests(class_name)
+---@param targets? string[]  `--tests` values (`Class` or `Class.method`); nil runs the whole suite
+---@param label? string       results file name stem (defaults to the single target or "all-tests")
+local function run_tests(targets, label)
 	if not (guard.project() and guard.executable("sf")) then
 		return
 	end
 	local results_dir = vim.fn.getcwd() .. "/" .. M.config.test_results_dir
 	vim.fn.mkdir(results_dir, "p")
 
-	local logfile = string.format("%s/%s_%s.json", results_dir, class_name or "all-tests", os.date("%Y%m%d%H%M%S"))
+	label = label or (targets and targets[1]) or "all-tests"
+	local logfile = string.format("%s/%s_%s.json", results_dir, label, os.date("%Y%m%d%H%M%S"))
 
 	local base = { "sf", "apex", "run", "test", "-w", tostring(M.config.test_wait_time) }
-	if class_name then
-		vim.list_extend(base, { "--tests", class_name })
+	for _, t in ipairs(targets or {}) do
+		vim.list_extend(base, { "--tests", t })
 	end
 
 	-- Run twice: once for machine-readable JSON, once for the human-readable stream.
@@ -66,7 +68,7 @@ function M.run_test()
 		vim.notify("No filename to test", vim.log.levels.WARN)
 		return
 	end
-	run_tests(target)
+	run_tests({ target })
 end
 
 -- -------------------------------------------------------------
@@ -120,7 +122,7 @@ function M.run_test_method()
 		vim.notify("No @IsTest method found at or above the cursor", vim.log.levels.WARN)
 		return
 	end
-	run_tests(class .. "." .. method)
+	run_tests({ class .. "." .. method })
 end
 
 -- -------------------------------------------------------------
@@ -129,6 +131,31 @@ end
 ---Run every test in the org; failures are loaded into quickfix.
 function M.run_all_tests()
 	run_tests(nil)
+end
+
+-- -------------------------------------------------------------
+-- Rerun the tests that failed in the most recent results file
+-- -------------------------------------------------------------
+---Rerun only the Fail/CompileFail methods from the latest results file.
+function M.run_failed_tests()
+	local results_dir = vim.fn.getcwd() .. "/" .. M.config.test_results_dir
+	local latest = quickfix.find_latest_test_results(results_dir)
+	if not latest then
+		vim.notify("No test results in " .. M.config.test_results_dir .. " — run some tests first", vim.log.levels.WARN)
+		return
+	end
+	local data = quickfix.read_results(latest)
+	if not data then
+		vim.notify("Could not parse " .. latest, vim.log.levels.ERROR)
+		return
+	end
+	local failed = quickfix.failed_tests(data)
+	if #failed == 0 then
+		vim.notify("No failures in " .. vim.fn.fnamemodify(latest, ":t"), vim.log.levels.INFO)
+		return
+	end
+	vim.notify(string.format("Rerunning %d failed test%s", #failed, #failed == 1 and "" or "s"), vim.log.levels.INFO)
+	run_tests(failed, "failed")
 end
 
 -- -------------------------------------------------------------

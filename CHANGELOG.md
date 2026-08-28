@@ -7,6 +7,16 @@ tag.
 
 ## Unreleased
 
+### 2026-08-28 — Rerun failed tests, `plugin/` stub
+- `:Sf test failed` (`<leader>stf`): reads the newest results file, collects
+  Fail/CompileFail methods (`quickfix.failed_tests`) and reruns them with
+  `--tests Class.method ...`. `apex.run_tests` now takes a target list.
+- `plugin/sf-nvim.lua`: `:Sf` (with completion) exists at startup; the first
+  invocation without a prior `setup()` runs `setup({})`. `M.did_setup` flag,
+  `M._command`/`M._complete` exported for the stub. `plugin_spec` sources
+  the file in isolation.
+- Tests: 85 total.
+
 ### 2026-08-28 — Keymap review (breaking)
 - Anonymous Apex keys moved under an `a` prefix so every group is a two-key
   prefix: `<leader>se` → `<leader>sae`, `<leader>sd` → `<leader>sad` (normal

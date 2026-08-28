@@ -48,7 +48,9 @@ Run `:checkhealth sf-nvim` to confirm. See |sf-nvim-health|.
 ==============================================================================
 3. SETUP                                                       *sf-nvim-setup*
 
-Nothing is registered until |sf-nvim.setup()| is called: >lua
+`:Sf` is registered at startup by `plugin/sf-nvim.lua`; the first time it is
+used without an explicit setup it calls |sf-nvim.setup()| with defaults (no
+keymaps). To configure anything, call setup yourself: >lua
 
     require("sf-nvim").setup({
         enable_default_keybinds = true,
@@ -128,6 +130,13 @@ Test group ~
                                                                 *:Sf-test-all*
 :Sf test all
         Run every test in the org, same result handling as above.
+
+                                                             *:Sf-test-failed*
+:Sf test failed
+        Rerun only the methods whose outcome was Fail or CompileFail in the
+        most recent file under |sf-nvim-config.test_results_dir|, as
+        `--tests Class.method ...`. Same result handling as above; the new
+        results file is named `failed_<timestamp>.json`.
 
                                                                *:Sf-test-load*
 :Sf test load
@@ -273,6 +282,7 @@ with the default prefix `<leader>s`. Keys are grouped by a prefix letter:
     <leader>stc     :Sf test current
     <leader>stm     :Sf test method
     <leader>sta     :Sf test all
+    <leader>stf     :Sf test failed
     <leader>stl     :Sf test load
     <leader>stx     :Sf test clear
     <leader>sae     :Sf apex execute            (normal mode)

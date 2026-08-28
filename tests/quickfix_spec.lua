@@ -154,3 +154,32 @@ describe("quickfix.find_latest_test_results", function()
 		vim.fn.delete(tmp, "rf")
 	end)
 end)
+
+describe("quickfix.failed_tests", function()
+	it("lists Fail/CompileFail methods as Class.method, sorted and unique", function()
+		local names = quickfix.failed_tests(load_fixture("apex_test_failures.json"))
+		assert.same({
+			"AccountServiceTest.testNoStackLine",
+			"AccountServiceTest.testUpdateFails",
+			"MissingClassTest.testSomething",
+		}, names)
+	end)
+
+	it("returns an empty list for an all-pass run or garbage", function()
+		assert.same({}, quickfix.failed_tests(load_fixture("apex_test_all_pass.json")))
+		assert.same({}, quickfix.failed_tests(load_fixture("apex_test_error.json")))
+		assert.same({}, quickfix.failed_tests(nil))
+		assert.same({}, quickfix.failed_tests("nope"))
+	end)
+end)
+
+describe("quickfix.read_results", function()
+	it("decodes a results file and returns nil for missing or invalid files", function()
+		assert.truthy(quickfix.read_results(fixtures .. "/apex_test_failures.json").result)
+		assert.is_nil(quickfix.read_results(fixtures .. "/does-not-exist.json"))
+		local bad = vim.fn.tempname()
+		vim.fn.writefile({ "{ not json" }, bad)
+		assert.is_nil(quickfix.read_results(bad))
+		vim.fn.delete(bad)
+	end)
+end)

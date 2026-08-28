@@ -30,7 +30,7 @@ describe("sf-nvim.setup", function()
 			{ "apex", "config", "log", "org", "project", "soql", "test" },
 			vim.fn.getcompletion("Sf ", "cmdline")
 		)
-		assert.same({ "all", "clear", "current", "load", "method" }, vim.fn.getcompletion("Sf test ", "cmdline"))
+		assert.same({ "all", "clear", "current", "failed", "load", "method" }, vim.fn.getcompletion("Sf test ", "cmdline"))
 		assert.same({ "test" }, vim.fn.getcompletion("Sf te", "cmdline"))
 	end)
 

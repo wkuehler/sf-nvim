@@ -31,8 +31,9 @@ nvim --cmd 'set rtp+=/home/bill/projects/sf-nvim' \
      -c 'lua require("sf-nvim").setup({ enable_default_keybinds = true })'
 ```
 
-Nothing is loaded until `require("sf-nvim").setup()` is called — there is no `plugin/`
-directory. `doc/sf-nvim.txt` is the help file — update it alongside README and
+`plugin/sf-nvim.lua` registers `:Sf` at startup (completion and handler are
+`M._complete`/`M._command` from `init.lua`); its first use calls `setup({})` if the
+user has not. Nothing else loads until then. `doc/sf-nvim.txt` is the help file — update it alongside README and
 `M.actions` when commands/options change. `:checkhealth sf-nvim` (`health.lua`) works without `setup()`.
 CI (`.github/workflows/ci.yml`) runs stylua, luacheck, and the tests on nvim 0.10.0/stable/nightly. Formatting is tabs, 120 columns (`stylua.toml`).
 
