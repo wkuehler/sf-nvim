@@ -34,7 +34,7 @@ nvim --cmd 'set rtp+=/home/bill/projects/sf-nvim' \
 Nothing is loaded until `require("sf-nvim").setup()` is called — there is no `plugin/`
 directory. `doc/sf-nvim.txt` is the help file — update it alongside README and
 `M.actions` when commands/options change. `:checkhealth sf-nvim` (`health.lua`) works without `setup()`.
-CI (`.github/workflows/ci.yml`) runs stylua, luacheck, and the tests on nvim 0.9.5/stable/nightly. Formatting is tabs, 120 columns (`stylua.toml`).
+CI (`.github/workflows/ci.yml`) runs stylua, luacheck, and the tests on nvim 0.10.0/stable/nightly. Formatting is tabs, 120 columns (`stylua.toml`).
 
 ## Architecture
 
@@ -49,16 +49,18 @@ All process execution goes through `utils/runner.lua`, which has two styles:
 
 1. **`runner.term(cmd, {on_exit})`** — interactive terminal split at the bottom, ends
    with a `Press ENTER to close` pause, deletes its buffer on `TermClose`, then calls
-   `on_exit(code)`. Used by `apex.lua`, `org.lua`, `project.lua`. Pass an argv list and
+   `on_exit(code)`. Used by `apex.lua`, `org.lua` (except `open`), `project.lua`. Pass an argv list and
    it is shell-escaped for you; pass a string only when you need shell syntax (the test
    runner does, to redirect `--json` output). Test runs invoke `sf apex run test`
    **twice** — once `--json` to a timestamped file under `<cwd>/<test_results_dir>/`,
    once plain for a readable stream — and `on_exit` hands the file to
    `quickfix.load_from_file`.
-2. **`runner.capture(argv)` / `runner.json(argv)`** — synchronous `vim.fn.system` with an
-   argv list (no shell). Used by `set-config.lua` and `quickfix.find_class_file`. These
-   block the UI; the async roadmap item is about replacing these and non-interactive
-   `term` uses with `vim.system()`.
+2. **`runner.run(argv, {on_exit, progress})` / `runner.json_async(argv, cb)`** — async
+   `vim.system()`, callback scheduled on the main loop. Used by `set-config.lua`
+   (org list → picker → `sf config set`) and `org.open`. Rule of thumb: `term` when the
+   user should watch the output, `run` when the plugin consumes it.
+3. **`runner.capture(argv)` / `runner.json(argv)`** — synchronous `vim.fn.system`. Only
+   `quickfix.find_class_file` (ripgrep) still uses this; keep it for fast local tools.
 
 `quickfix.lua` parses `sf apex run test --json`: walks `result.tests[]`, keeps
 `Outcome == "Fail"/"CompileFail"`, pulls the first `line N, column M` out of
@@ -76,8 +78,8 @@ and `set-config.build_org_items` are the two places coupled to the CLI's JSON sh
   against `^[%w_]+$` before reaching ripgrep.
 - Scratch org definition files are discovered via `config/**/*-scratch-def.json` relative
   to `getcwd()`; the standard `force-app` layout is otherwise assumed but not verified.
-- Stated Neovim floor is 0.7 (README). `vim.system()` (0.10+) is not used yet; if you
-  raise the floor, update the README requirement too.
+- Neovim floor is 0.10 (`vim.system()`); enforced in `setup()`, `health.lua`, README,
+  `doc/sf-nvim.txt`, and the CI matrix — change all five together.
 - `open-items.md` is the roadmap; check items off there as they land.
 - After each milestone (a roadmap item landing), add an entry to `CHANGELOG.md`
   (date, commit, what changed, any bugs found along the way) in the same commit.

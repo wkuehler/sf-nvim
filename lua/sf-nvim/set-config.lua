@@ -51,36 +51,48 @@ function M.set_default(config_key)
 		return
 	end
 
-	local data, err = runner.json({ "sf", "org", "list", "--json" })
-	if not data then
-		vim.notify("sf org list: " .. err, vim.log.levels.ERROR)
-		return
-	end
-
-	local items = M.build_org_items(data)
-	if #items == 0 then
-		vim.notify("No orgs found", vim.log.levels.WARN)
-		return
-	end
-
-	vim.ui.select(items, {
-		prompt = string.format("Select %s:", config_key),
-		format_item = function(item)
-			return item.label
-		end,
-	}, function(choice)
-		if not choice then
+	runner.json_async({ "sf", "org", "list", "--json" }, function(data, err)
+		if not data then
+			vim.notify("sf org list: " .. err, vim.log.levels.ERROR)
 			return
 		end
 
-		local org_identifier = choice.alias or choice.username
-		local output, code = runner.capture({ "sf", "config", "set", config_key, org_identifier })
-		if code == 0 then
-			vim.notify(string.format("Set %s to %s", config_key, org_identifier), vim.log.levels.INFO)
-		else
-			vim.notify(string.format("Failed to set %s: %s", config_key, vim.trim(output)), vim.log.levels.ERROR)
+		local items = M.build_org_items(data)
+		if #items == 0 then
+			vim.notify("No orgs found", vim.log.levels.WARN)
+			return
 		end
-	end)
+
+		vim.ui.select(items, {
+			prompt = string.format("Select %s:", config_key),
+			format_item = function(item)
+				return item.label
+			end,
+		}, function(choice)
+			if not choice then
+				return
+			end
+			M.apply(config_key, choice.alias or choice.username)
+		end)
+	end, { progress = "Loading orgs..." })
+end
+
+-- -------------------------------------------------------------
+-- `sf config set <key> <value>` asynchronously, notifying on completion
+-- -------------------------------------------------------------
+---@param config_key "target-org"|"target-dev-hub"
+---@param org_identifier string  alias or username
+function M.apply(config_key, org_identifier)
+	runner.run({ "sf", "config", "set", config_key, org_identifier }, {
+		on_exit = function(code, stdout, stderr)
+			if code == 0 then
+				vim.notify(string.format("Set %s to %s", config_key, org_identifier), vim.log.levels.INFO)
+			else
+				local detail = vim.trim(stderr ~= "" and stderr or stdout)
+				vim.notify(string.format("Failed to set %s: %s", config_key, detail), vim.log.levels.ERROR)
+			end
+		end,
+	})
 end
 
 function M.set_target_org()

@@ -4,14 +4,16 @@ Salesforce CLI (`sf`) integration for Neovim. Run Apex tests with failures in
 quickfix, deploy and retrieve metadata, manage orgs and scratch orgs, and execute
 anonymous Apex — without leaving the editor.
 
-Everything runs in a terminal split at the bottom of the screen, so you see exactly
-what the CLI is doing. No background magic, no custom UI: just `sf` commands in
-Neovim, with `vim.notify` / `vim.ui.select` for feedback and pickers (so it works
-with whatever UI plugins you already have, or none).
+Long-running commands (tests, deploys, scratch org creation) run in a terminal
+split at the bottom of the screen, so you see exactly what the CLI is doing.
+Quick lookups (listing orgs for a picker, setting the target org, opening an org)
+run in the background without blocking the editor. No custom UI: feedback and
+pickers go through `vim.notify` / `vim.ui.select`, so it works with whatever UI
+plugins you already have, or none.
 
 ## Requirements
 
-- Neovim >= 0.7
+- Neovim >= 0.10
 - [Salesforce CLI](https://developer.salesforce.com/tools/salesforcecli) (`sf`) installed and authenticated
 - [ripgrep](https://github.com/BurntSushi/ripgrep) (`rg`) — used to locate Apex class files for quickfix
 - An SFDX project: open Neovim from the directory containing `sfdx-project.json`
@@ -114,8 +116,8 @@ the target org from a picker afterwards.
 
 ## Known limitations
 
-- Commands block in a terminal split until they finish; there is no background
-  execution yet.
+- Long-running commands (tests, deploys, scratch org creation) run in a terminal
+  split by design so you can watch them; only quick lookups run in the background.
 - Quickfix parsing depends on the `sf apex run test --json` output shape.
 - Class file lookup assumes the standard `<Name>.cls` file naming.
 

@@ -20,15 +20,18 @@ sf-nvim wraps the Salesforce CLI (`sf`) so common SFDX tasks can be run from
 inside Neovim: Apex tests with failures in the quickfix list, deploy/retrieve,
 org and scratch org management, and anonymous Apex execution.
 
-Commands run in a terminal split at the bottom of the screen. The split stays
-open until you press <Enter>, so the full CLI output is always visible. User
+Long-running commands (tests, deploys, scratch org creation) run in a terminal
+split at the bottom of the screen. The split stays open until you press
+<Enter>, so the full CLI output is always visible. Quick lookups — the org
+picker behind |:Sf-config-org|, `sf config set`, |:Sf-org-open| — run in the
+background with |vim.system()| and report through |vim.notify()|. User
 feedback goes through |vim.notify()|, |vim.ui.select()| and |vim.ui.input()|,
 so the plugin picks up whatever UI overrides you already use.
 
 ==============================================================================
 2. REQUIREMENTS                                         *sf-nvim-requirements*
 
-- Neovim 0.7 or later
+- Neovim 0.10 or later (uses |vim.system()|)
 - Salesforce CLI (`sf`) on $PATH and authenticated to at least one org
 - ripgrep (`rg`) on $PATH, used to find Apex class files for quickfix
 - An SFDX project. The plugin treats the current working directory (see
@@ -121,7 +124,9 @@ Apex group ~
 
 Org group ~
                                                                 *:Sf-org-open*
-:Sf org open            `sf org open`
+:Sf org open
+        `sf org open` in the background; the org URL (or the error) is
+        shown with |vim.notify()|.
                                                                 *:Sf-org-list*
 :Sf org list            `sf org list`
                                                                 *:Sf-org-info*
@@ -137,7 +142,8 @@ Config group ~
                                                               *:Sf-config-org*
 :Sf config org
         Pick from the authenticated orgs and set it as `target-org`
-        (`sf config set target-org`).
+        (`sf config set target-org`). The org list is fetched in the
+        background; the picker opens when it arrives.
 
                                                               *:Sf-config-hub*
 :Sf config hub
@@ -230,6 +236,12 @@ Module functions (all take no arguments unless noted):
 
     require("sf-nvim.set-config")
         .set_target_org() .set_target_dev_hub()
+        .apply({key}, {org})    `sf config set {key} {org}`, async
+
+    require("sf-nvim.utils.runner")
+        .term({argv|cmd}, {opts})           terminal split, opts.on_exit(code)
+        .run({argv}, {opts})                async vim.system(); opts.on_exit(code, stdout, stderr)
+        .json_async({argv}, {cb}, {opts})   async + JSON decode; cb(data, err)
 
     require("sf-nvim.quickfix")
         .load_from_file({path})             -> boolean (had failures)

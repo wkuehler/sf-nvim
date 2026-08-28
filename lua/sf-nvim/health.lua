@@ -6,18 +6,10 @@
 
 local M = {}
 
--- vim.health API shim: 0.10+ has start/ok/warn/error; 0.8–0.9 have report_*;
--- 0.7 exposes the same report_* functions via require("health").
-local h = vim.health or require("health")
-local health = {
-	start = h.start or h.report_start,
-	ok = h.ok or h.report_ok,
-	warn = h.warn or h.report_warn,
-	error = h.error or h.report_error,
-}
+local health = vim.health
 
 ---@type { major: integer, minor: integer }
-M.min_nvim = { major = 0, minor = 7 }
+M.min_nvim = { major = 0, minor = 10 }
 
 ---@return string|nil version  first line of `<exe> --version`, or nil if it failed
 local function version_of(argv)

@@ -1,9 +1,12 @@
 -- runner.lua
 -- Shared command execution helpers.
 --
--- Two styles:
---   * M.term    -- interactive terminal split; user watches output, presses ENTER to close
---   * M.capture -- synchronous capture (no shell involved when given an argv list)
+-- Three styles:
+--   * M.term    -- interactive terminal split; user watches output, presses ENTER to close.
+--                  For long or chatty commands (tests, deploys, scratch org creation).
+--   * M.run     -- async via vim.system(); result delivered to a callback on the main loop.
+--                  For commands whose output is consumed by the plugin, not the user.
+--   * M.capture -- synchronous; only for fast local tools (ripgrep) inside a callback.
 
 local M = {}
 
@@ -66,8 +69,59 @@ function M.term(cmd, opts)
 end
 
 -- -------------------------------------------------------------
+-- Run a command asynchronously (vim.system, no shell).
+-- The callback is invoked on the main loop, so it may touch UI.
+-- -------------------------------------------------------------
+---@class SfRunOpts
+---@field on_exit? fun(code: integer, stdout: string, stderr: string)
+---@field cwd? string
+---@field progress? string   message shown via vim.notify while the command runs
+
+---@param argv string[]
+---@param opts? SfRunOpts
+---@return vim.SystemObj
+function M.run(argv, opts)
+	opts = opts or {}
+	if opts.progress then
+		vim.notify(opts.progress, vim.log.levels.INFO)
+	end
+	return vim.system(argv, { text = true, cwd = opts.cwd }, function(res)
+		if opts.on_exit then
+			vim.schedule(function()
+				opts.on_exit(res.code, res.stdout or "", res.stderr or "")
+			end)
+		end
+	end)
+end
+
+-- -------------------------------------------------------------
+-- Run a command asynchronously and JSON-decode its stdout.
+-- `sf --json` writes the payload to stdout even on failure, so the
+-- decoded data is passed through whenever it parses; `err` is set
+-- only when the output is not JSON at all.
+-- -------------------------------------------------------------
+---@param argv string[]
+---@param cb fun(data: table|nil, err: string|nil)
+---@param opts? SfRunOpts
+---@return vim.SystemObj
+function M.json_async(argv, cb, opts)
+	opts = opts or {}
+	opts.on_exit = function(code, stdout, stderr)
+		local ok, data = pcall(vim.json.decode, stdout)
+		if not ok then
+			local detail = vim.trim(stderr ~= "" and stderr or stdout)
+			cb(nil, string.format("failed to parse JSON (exit %d): %s", code, detail))
+			return
+		end
+		cb(data, nil)
+	end
+	return M.run(argv, opts)
+end
+
+-- -------------------------------------------------------------
 -- Run a command synchronously and capture its output.
--- Prefer an argv list: it bypasses the shell entirely.
+-- Blocks the UI: reserve for fast local tools. Prefer an argv
+-- list: it bypasses the shell entirely.
 -- -------------------------------------------------------------
 ---@param cmd string|string[]
 ---@return string output

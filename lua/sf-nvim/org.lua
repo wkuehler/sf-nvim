@@ -8,9 +8,18 @@ local runner = require("sf-nvim.utils.runner")
 -- -------------------------------------------------------------
 -- Open the default org in browser
 -- -------------------------------------------------------------
----`sf org open` in a terminal split.
+---`sf org open` in the background; notifies with the URL or the error.
 function M.open()
-	runner.term({ "sf", "org", "open" })
+	runner.run({ "sf", "org", "open" }, {
+		progress = "Opening org...",
+		on_exit = function(code, stdout, stderr)
+			if code == 0 then
+				vim.notify(vim.trim(stdout) ~= "" and vim.trim(stdout) or "Org opened", vim.log.levels.INFO)
+			else
+				vim.notify("sf org open failed: " .. vim.trim(stderr ~= "" and stderr or stdout), vim.log.levels.ERROR)
+			end
+		end,
+	})
 end
 
 -- -------------------------------------------------------------

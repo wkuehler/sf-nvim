@@ -21,13 +21,13 @@ but built and documented as a single-user tool.
 
 ## Execution model
 
-- [ ] **Async execution.** Everything currently blocks in a terminal split
-      until the command finishes (README calls this out as a known
-      limitation). Consider `vim.system()` (Neovim ≥0.10) for jobs where the
-      user doesn't need to babysit output live, reserving terminal splits
-      for cases where watching output matters (e.g. long deploys).
-      Trade-off: terminal splits are simple and transparent ("no magic");
-      async needs a real progress/notification story to not feel worse.
+- [x] **Async execution.** (2026-08-28) Floor raised to Neovim 0.10.
+      `runner.run` / `runner.json_async` wrap `vim.system()`; used for the
+      org-list picker, `sf config set`, and `sf org open`. Terminal splits
+      kept for tests, deploys, scratch-org creation, `org list/display`,
+      anonymous Apex — anywhere the user should watch the stream. Progress
+      goes through `vim.notify` (`opts.progress`). Only remaining sync call
+      is ripgrep in `quickfix.find_class_file`.
 
 ## Discoverability / API surface
 

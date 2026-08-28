@@ -6,6 +6,23 @@ tagging begins.
 
 ## Unreleased
 
+### 2026-08-28 — Async execution, Neovim floor raised to 0.10
+- **Breaking:** requires Neovim 0.10+ (`vim.system()`). Enforced in `setup()`
+  (clear error and bail), `:checkhealth`, README, help, and the CI matrix
+  (now 0.10.0 / stable / nightly).
+- `runner.run(argv, {on_exit, progress, cwd})` and
+  `runner.json_async(argv, cb)`: async, no shell, callback scheduled on the
+  main loop, optional progress notification.
+- Converted the UI-blocking call sites: `:Sf config org/hub` fetch the org
+  list in the background then open the picker; `sf config set` and
+  `:Sf org open` run async and report via `vim.notify`. Terminal splits are
+  kept wherever watching output matters (tests, deploy/retrieve/validate,
+  scratch org creation, `org list/display`, anonymous Apex).
+- `health.lua` drops the 0.7–0.9 `vim.health` shim.
+- Tests: `tests/runner_spec.lua` (real subprocesses via `sh`), and
+  `set_default` driven end-to-end with stubbed runner/`vim.ui.select`.
+  Suite is 27 specs.
+
 ### 2026-08-28 — Docs, generalization, `auto_open_quickfix` fix (`93f9802`)
 - `doc/sf-nvim.txt`: `:help sf-nvim` with tags for every option, `:Sf` action,
   keymap, and public Lua function.

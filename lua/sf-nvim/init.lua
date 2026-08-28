@@ -226,6 +226,10 @@ end
 -- -------------------------------------------------------------
 ---@param opts? SfConfig
 function M.setup(opts)
+	if vim.fn.has("nvim-0.10") == 0 then
+		vim.notify("sf-nvim requires Neovim 0.10 or later (vim.system)", vim.log.levels.ERROR)
+		return
+	end
 	M.config = vim.tbl_deep_extend("force", vim.deepcopy(default_config), opts or {})
 
 	M.apex.config.test_results_dir = M.config.test_results_dir
