@@ -28,6 +28,7 @@ Run `:checkhealth sf-nvim` to verify all of the above.
 ```lua
 {
     "wkuehler/sf-nvim",
+    version = "*",  -- latest tagged release; drop to track main
     opts = {
         enable_default_keybinds = true,
     },
@@ -128,6 +129,10 @@ make test                                    # plenary.nvim test suite
 make test-file FILE=tests/quickfix_spec.lua  # one spec
 make lint / make fmt                         # luacheck / stylua
 ```
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 

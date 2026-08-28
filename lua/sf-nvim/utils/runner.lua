@@ -10,6 +10,8 @@
 
 local M = {}
 
+local guard = require("sf-nvim.utils.guard")
+
 -- -------------------------------------------------------------
 -- Build a shell command string from an argv list, escaping each arg
 -- -------------------------------------------------------------
@@ -34,10 +36,13 @@ end
 
 ---@param cmd string|string[]  shell string, or argv list (escaped for you)
 ---@param opts? SfTermOpts
----@return integer bufnr
+---@return integer|nil bufnr   nil if the executable is missing (already notified)
 function M.term(cmd, opts)
 	opts = opts or {}
 	if type(cmd) == "table" then
+		if not guard.executable(cmd[1]) then
+			return nil
+		end
 		cmd = M.shell_join(cmd)
 	end
 	if not opts.no_wait then
@@ -79,9 +84,12 @@ end
 
 ---@param argv string[]
 ---@param opts? SfRunOpts
----@return vim.SystemObj
+---@return vim.SystemObj|nil   nil if the executable is missing (already notified)
 function M.run(argv, opts)
 	opts = opts or {}
+	if not guard.executable(argv[1]) then
+		return nil
+	end
 	if opts.progress then
 		vim.notify(opts.progress, vim.log.levels.INFO)
 	end
@@ -103,7 +111,7 @@ end
 ---@param argv string[]
 ---@param cb fun(data: table|nil, err: string|nil)
 ---@param opts? SfRunOpts
----@return vim.SystemObj
+---@return vim.SystemObj|nil
 function M.json_async(argv, cb, opts)
 	opts = opts or {}
 	opts.on_exit = function(code, stdout, stderr)

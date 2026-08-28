@@ -13,6 +13,9 @@ function M.find_class_file(class_name)
 	if not class_name:match("^[%w_]+$") then
 		return nil
 	end
+	if vim.fn.executable("rg") == 0 then
+		return nil
+	end
 	local output = vim.fn.system({ "rg", "--files", "--glob", "**/" .. class_name .. ".cls" })
 	if vim.v.shell_error ~= 0 then
 		return nil
@@ -138,6 +141,9 @@ function M.load_from_file(filepath)
 		return false
 	end
 
+	-- Missing ripgrep is reported once here; find_class_file then returns nil
+	-- and every failure ends up in the "not in quickfix" summary line.
+	require("sf-nvim.utils.guard").executable("rg")
 	local qf_items, skipped_tests = M.parse_test_results(data)
 	vim.fn.setqflist({}, "r", { title = "Apex test failures", items = qf_items })
 	notify_summary(data, qf_items, skipped_tests)

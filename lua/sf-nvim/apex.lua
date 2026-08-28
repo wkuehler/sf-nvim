@@ -5,6 +5,7 @@ local M = {}
 
 local runner = require("sf-nvim.utils.runner")
 local quickfix = require("sf-nvim.quickfix")
+local guard = require("sf-nvim.utils.guard")
 
 ---@class SfApexConfig
 ---@field test_results_dir string  relative to cwd
@@ -25,6 +26,9 @@ M.config = {
 -- -------------------------------------------------------------
 ---@param class_name? string  nil runs the whole suite
 local function run_tests(class_name)
+	if not (guard.project() and guard.executable("sf")) then
+		return
+	end
 	local results_dir = vim.fn.getcwd() .. "/" .. M.config.test_results_dir
 	vim.fn.mkdir(results_dir, "p")
 

@@ -4,6 +4,7 @@
 local M = {}
 
 local runner = require("sf-nvim.utils.runner")
+local guard = require("sf-nvim.utils.guard")
 
 -- -------------------------------------------------------------
 -- Open the default org in browser
@@ -64,6 +65,9 @@ end
 -- -------------------------------------------------------------
 ---Prompt for definition file, duration and alias, then `sf org create scratch`.
 function M.create_scratch_org()
+	if not guard.project() then
+		return
+	end
 	local items = M.find_scratch_defs()
 	if #items == 0 then
 		vim.notify("No config/**/*-scratch-def.json files found in " .. vim.fn.getcwd(), vim.log.levels.ERROR)

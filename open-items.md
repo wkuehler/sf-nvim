@@ -44,11 +44,11 @@ but built and documented as a single-user tool.
       no Resource Hero references; documents config, commands, keymaps and
       workflow for any SFDX project. Code had no project-specific
       assumptions beyond standard SFDX conventions.
-- [ ] **Config validation / setup guidance.** If `sf` CLI or `ripgrep`
-      aren't installed, or the project isn't a recognized SFDX layout, fail
-      with a clear, actionable message rather than a generic error deep in
-      a call chain. `:checkhealth` now covers the diagnosis side; this item
-      is about runtime guards at the call sites.
+- [x] **Config validation / setup guidance.** (2026-08-28)
+      `utils/guard.lua`: `runner.term`/`run` refuse to launch a missing
+      executable; tests/deploy/retrieve/validate/scratch-create require
+      `sfdx-project.json` in cwd; missing ripgrep is reported once when
+      loading results. Every message points at `:checkhealth sf-nvim`.
 
 ## Packaging / distribution polish
 
@@ -56,11 +56,12 @@ but built and documented as a single-user tool.
       `make lint`); neither tool is installed locally yet, CI should run them.
 - [x] **lazy.nvim spec convention** — README now uses `opts = {...}`
       (2026-08-28). packer/vim-plug examples still TODO if wanted.
-- [ ] **CONTRIBUTING.md** — if this is meant to become a community
-      standard, contributors need a stated process (style, test
-      requirements, PR expectations).
-- [ ] **Versioned releases / tags** — semantic versioning + GitHub releases
-      so lazy.nvim users can pin versions instead of tracking `main`.
+- [x] **CONTRIBUTING.md** (2026-08-28) — ground rules, workflow, tests,
+      style, bug-report checklist.
+- [x] **Versioned releases / tags** (2026-08-28) — `v0.1.0` (last 0.7-floor
+      commit) and `v0.2.0` (0.10 floor, async) tagged with GitHub releases.
+      Process: move CHANGELOG *Unreleased* under a version heading, tag,
+      `gh release create` with that section as notes.
 
 ## Notes
 

@@ -45,7 +45,11 @@ Add a feature by adding one entry there; don't register commands or keymaps else
 `setup()` merges opts over `default_config` and pushes `test_results_dir`/`test_wait_time`
 into `apex.config` (the only module with its own config table).
 
-All process execution goes through `utils/runner.lua`, which has two styles:
+`utils/guard.lua` holds the preflight checks (`executable(exe)`, `project()`); `runner.term`
+(argv form) and `runner.run` call `guard.executable` themselves, so a missing `sf` is one
+notification, never a shell error. Call `guard.project()` in actions that need an SFDX root.
+
+All process execution goes through `utils/runner.lua`, which has three styles:
 
 1. **`runner.term(cmd, {on_exit})`** — interactive terminal split at the bottom, ends
    with a `Press ENTER to close` pause, deletes its buffer on `TermClose`, then calls
