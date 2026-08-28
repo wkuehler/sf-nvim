@@ -6,47 +6,24 @@ local M = {}
 local runner = require("sf-nvim.utils.runner")
 
 -- -------------------------------------------------------------
--- Helper function to format Apex output
--- -------------------------------------------------------------
-local function format_apex_output(code, stdout, stderr)
-	if code == 0 then
-		return stdout ~= "" and stdout or "Command succeeded."
-	end
-	if stderr ~= "" then
-		return stderr
-	end
-	if stdout ~= "" then
-		return stdout
-	end
-	return "Command failed."
-end
-
--- -------------------------------------------------------------
 -- Deploy project to org
 -- -------------------------------------------------------------
 function M.deploy()
-	vim.cmd("botright split | terminal bash -c \"sf project deploy start; echo ''; read -p 'Press ENTER to close...'\"")
-	vim.cmd("startinsert")
+	runner.term({ "sf", "project", "deploy", "start" })
 end
 
 -- -------------------------------------------------------------
 -- Retrieve metadata from org
 -- -------------------------------------------------------------
 function M.retrieve()
-	vim.cmd(
-		"botright split | terminal bash -c \"sf project retrieve start; echo ''; read -p 'Press ENTER to close...'\""
-	)
-	vim.cmd("startinsert")
+	runner.term({ "sf", "project", "retrieve", "start" })
 end
 
 -- -------------------------------------------------------------
--- Deploy with validation only (check only, no deploy)
+-- Validate deployment (dry run, nothing is deployed)
 -- -------------------------------------------------------------
 function M.validate()
-	vim.cmd(
-		"botright split | terminal bash -c \"sf project deploy start --dry-run; echo ''; read -p 'Press ENTER to close...'\""
-	)
-	vim.cmd("startinsert")
+	runner.term({ "sf", "project", "deploy", "start", "--dry-run" })
 end
 
 return M

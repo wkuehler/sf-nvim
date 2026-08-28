@@ -3,75 +3,149 @@
 
 local M = {}
 
--- Load submodules
 M.quickfix = require("sf-nvim.quickfix")
 M.apex = require("sf-nvim.apex")
 M.org = require("sf-nvim.org")
 M.project = require("sf-nvim.project")
 M.setconfig = require("sf-nvim.set-config")
 
--- Default configuration
+---@class SfConfig
+---@field test_results_dir string       directory for test result JSON, relative to cwd
+---@field auto_open_quickfix boolean    open quickfix after loading test results
+---@field test_wait_time integer        minutes to wait for `sf apex run test`
+---@field enable_default_keybinds boolean
+---@field leader_prefix string          prefix for default keybinds
+
+---@type SfConfig
 local default_config = {
-	-- Directory where test results are stored (relative to project root)
 	test_results_dir = "test-results",
-	-- Automatically open quickfix window when loading test results
 	auto_open_quickfix = true,
-	-- Test wait time in minutes
 	test_wait_time = 15,
-	-- Enable default keybindings
 	enable_default_keybinds = false,
-	-- Key prefix for Salesforce commands (if using default keybinds)
 	leader_prefix = "<leader>s",
 }
 
--- Plugin configuration
-M.config = {}
+---@type SfConfig
+M.config = vim.deepcopy(default_config)
 
 -- -------------------------------------------------------------
--- Setup default keybindings
+-- Action table: single source of truth for :Sf subcommands and keymaps
 -- -------------------------------------------------------------
-local function setup_keybinds()
-	local prefix = M.config.leader_prefix
+---@class SfAction
+---@field fn fun()
+---@field desc string
+---@field key string   suffix appended to leader_prefix
 
-	-- Apex test keybinds
-	vim.keymap.set("n", prefix .. "tc", M.apex.run_test, { desc = "Tests - Current" })
-	vim.keymap.set("n", prefix .. "ta", M.apex.run_all_tests, { desc = "Tests - All" })
-	vim.keymap.set("n", prefix .. "tx", M.apex.clear_test_results, { desc = "Tests - Clear results directory" })
-	vim.keymap.set("n", prefix .. "e", M.apex.execute_script, { desc = "Execute current class" })
+---@type table<string, table<string, SfAction>>
+M.actions = {
+	test = {
+		current = { key = "tc", desc = "Run tests for current class", fn = function() M.apex.run_test() end },
+		all = { key = "ta", desc = "Run all Apex tests", fn = function() M.apex.run_all_tests() end },
+		clear = { key = "tx", desc = "Clear test results directory", fn = function() M.apex.clear_test_results() end },
+		load = {
+			key = "tl",
+			desc = "Load latest test results into quickfix",
+			fn = function()
+				M.quickfix.load_and_open(M.config.test_results_dir)
+			end,
+		},
+	},
+	apex = {
+		execute = { key = "e", desc = "Execute current file as anonymous Apex", fn = function() M.apex.execute_script() end },
+	},
+	org = {
+		open = { key = "oo", desc = "Open org in browser", fn = function() M.org.open() end },
+		list = { key = "ol", desc = "List orgs", fn = function() M.org.list() end },
+		info = { key = "oi", desc = "Display org info", fn = function() M.org.display() end },
+		create = { key = "oc", desc = "Create scratch org", fn = function() M.org.create_scratch_org() end },
+	},
+	config = {
+		org = { key = "co", desc = "Set target-org", fn = function() M.setconfig.set_target_org() end },
+		hub = { key = "ch", desc = "Set target-dev-hub", fn = function() M.setconfig.set_target_dev_hub() end },
+	},
+	project = {
+		deploy = { key = "pd", desc = "Deploy project", fn = function() M.project.deploy() end },
+		retrieve = { key = "pr", desc = "Retrieve from org", fn = function() M.project.retrieve() end },
+		validate = { key = "pv", desc = "Validate deployment (dry run)", fn = function() M.project.validate() end },
+	},
+}
 
-	-- Quickfix keybinds
-	vim.keymap.set("n", prefix .. "tl", function()
-		M.quickfix.load_and_open(M.config.test_results_dir)
-	end, { desc = "Load latest test results" })
-
-	-- Org keybinds
-	vim.keymap.set("n", prefix .. "oo", M.org.open, { desc = "Open" })
-	vim.keymap.set("n", prefix .. "ol", M.org.list, { desc = "List" })
-	vim.keymap.set("n", prefix .. "oi", M.org.display, { desc = "Info" })
-	vim.keymap.set("n", prefix .. "oc", M.org.create_scratch_org, { desc = "Create scratch org" })
-
-	-- Project keybinds
-	vim.keymap.set("n", prefix .. "pd", M.project.deploy, { desc = "Deploy" })
-	vim.keymap.set("n", prefix .. "pr", M.project.retrieve, { desc = "Retrieve" })
-	vim.keymap.set("n", prefix .. "pv", M.project.validate, { desc = "Validate" })
-
-	-- Set Config keybinds
-	vim.keymap.set("n", prefix .. "co", M.setconfig.set_target_org, { desc = "Set target-org" })
-	vim.keymap.set("n", prefix .. "ch", M.setconfig.set_target_dev_hub, { desc = "Set target-dev-hub" })
+local function sorted_keys(t)
+	local keys = vim.tbl_keys(t)
+	table.sort(keys)
+	return keys
 end
 
 -- -------------------------------------------------------------
--- Setup function to configure the plugin
+-- :Sf <group> <action>
 -- -------------------------------------------------------------
-function M.setup(opts)
-	opts = opts or {}
-	M.config = vim.tbl_deep_extend("force", default_config, opts)
+local function sf_command(opts)
+	local group, action = opts.fargs[1], opts.fargs[2]
+	local g = group and M.actions[group]
+	if not g then
+		vim.notify("Sf: unknown group '" .. tostring(group) .. "'. Groups: " .. table.concat(sorted_keys(M.actions), ", "), vim.log.levels.ERROR)
+		return
+	end
+	local a = action and g[action]
+	if not a then
+		vim.notify(
+			string.format("Sf %s: unknown action '%s'. Actions: %s", group, tostring(action), table.concat(sorted_keys(g), ", ")),
+			vim.log.levels.ERROR
+		)
+		return
+	end
+	a.fn()
+end
 
-	-- Pass config to submodules
+local function sf_complete(arglead, cmdline, _)
+	local words = vim.split(cmdline, "%s+", { trimempty = true })
+	local trailing = cmdline:sub(-1) == " "
+	local candidates = {}
+	-- words[1] is "Sf"
+	if #words == 1 or (#words == 2 and not trailing) then
+		candidates = sorted_keys(M.actions)
+	else
+		local g = M.actions[words[2]]
+		if g and (#words == 2 or (#words == 3 and not trailing)) then
+			candidates = sorted_keys(g)
+		end
+	end
+	return vim.tbl_filter(function(c)
+		return c:sub(1, #arglead) == arglead
+	end, candidates)
+end
+
+local function setup_commands()
+	vim.api.nvim_create_user_command("Sf", sf_command, {
+		nargs = "+",
+		complete = sf_complete,
+		desc = "Salesforce CLI actions (:Sf <group> <action>)",
+	})
+end
+
+-- -------------------------------------------------------------
+-- Default keybindings
+-- -------------------------------------------------------------
+local function setup_keybinds()
+	local prefix = M.config.leader_prefix
+	for _, group in pairs(M.actions) do
+		for _, action in pairs(group) do
+			vim.keymap.set("n", prefix .. action.key, action.fn, { desc = "Sf: " .. action.desc })
+		end
+	end
+end
+
+-- -------------------------------------------------------------
+-- Setup
+-- -------------------------------------------------------------
+---@param opts? SfConfig
+function M.setup(opts)
+	M.config = vim.tbl_deep_extend("force", vim.deepcopy(default_config), opts or {})
+
 	M.apex.config.test_results_dir = M.config.test_results_dir
 	M.apex.config.test_wait_time = M.config.test_wait_time
 
-	-- Setup keybinds if enabled
+	setup_commands()
 	if M.config.enable_default_keybinds then
 		setup_keybinds()
 	end

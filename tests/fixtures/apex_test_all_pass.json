@@ -1,0 +1,27 @@
+{
+  "status": 0,
+  "result": {
+    "summary": {
+      "outcome": "Passed",
+      "testsRan": 1,
+      "passing": 1,
+      "failing": 0,
+      "skipped": 0,
+      "passRate": "100%",
+      "failRate": "0%"
+    },
+    "tests": [
+      {
+        "Id": "07M000000000001",
+        "StackTrace": null,
+        "Message": null,
+        "MethodName": "testCreatePasses",
+        "Outcome": "Pass",
+        "ApexClass": { "Id": "01p000000000001", "Name": "AccountServiceTest", "NamespacePrefix": null },
+        "RunTime": 120,
+        "FullName": "AccountServiceTest.testCreatePasses"
+      }
+    ]
+  },
+  "warnings": []
+}

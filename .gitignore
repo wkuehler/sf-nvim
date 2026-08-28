@@ -3,8 +3,8 @@
 *.swo
 *~
 
-# Test files
-test-results*.json
+# Test result output written by the plugin
+test-results/
 *.log
 
 # OS

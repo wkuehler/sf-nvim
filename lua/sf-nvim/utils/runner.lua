@@ -1,116 +1,95 @@
 -- runner.lua
--- Notification-based command runner with spinner
+-- Shared command execution helpers.
+--
+-- Two styles:
+--   * M.term    -- interactive terminal split; user watches output, presses ENTER to close
+--   * M.capture -- synchronous capture (no shell involved when given an argv list)
 
 local M = {}
 
-local frames = { "|", "/", "-", "\\" }
-
-local function start_spinner(text, title, interval)
-	-- Show initial message using plain vim.notify
-	vim.notify(string.format("[%s] %s", title, text), vim.log.levels.INFO)
-
-	local function stop()
-		-- No-op for plain vim.notify
+-- -------------------------------------------------------------
+-- Build a shell command string from an argv list, escaping each arg
+-- -------------------------------------------------------------
+---@param args string[]
+---@return string
+function M.shell_join(args)
+	local out = {}
+	for _, a in ipairs(args) do
+		table.insert(out, vim.fn.shellescape(a))
 	end
-
-	local function current()
-		-- Return nil since we can't track notifications with plain vim.notify
-		return nil
-	end
-
-	return stop, current
+	return table.concat(out, " ")
 end
 
-local function collect_lines(accum, data)
-	if not accum or not data then
-		return
+-- -------------------------------------------------------------
+-- Run a command in a terminal split at the bottom of the screen.
+-- The split stays open until the user presses ENTER.
+-- -------------------------------------------------------------
+---@class SfTermOpts
+---@field on_exit? fun(code: integer)  called (scheduled) after the terminal closes
+---@field no_wait? boolean             skip the "Press ENTER" pause
+---@field position? string             window command prefix (default "botright")
+
+---@param cmd string|string[]  shell string, or argv list (escaped for you)
+---@param opts? SfTermOpts
+---@return integer bufnr
+function M.term(cmd, opts)
+	opts = opts or {}
+	if type(cmd) == "table" then
+		cmd = M.shell_join(cmd)
 	end
-	for _, line in ipairs(data) do
-		if line ~= "" then
-			table.insert(accum, line)
-		end
+	if not opts.no_wait then
+		cmd = cmd .. "; __sf_rc=$?; echo ''; read -p 'Press ENTER to close...'; exit $__sf_rc"
 	end
+
+	local position = opts.position or "botright"
+	vim.cmd(string.format("%s split | terminal bash -c %s", position, vim.fn.shellescape(cmd)))
+	local bufnr = vim.api.nvim_get_current_buf()
+
+	vim.api.nvim_create_autocmd("TermClose", {
+		buffer = bufnr,
+		once = true,
+		callback = function(ev)
+			local code = vim.v.event and vim.v.event.status or 0
+			vim.schedule(function()
+				if vim.api.nvim_buf_is_valid(ev.buf) then
+					vim.api.nvim_buf_delete(ev.buf, { force = true })
+				end
+				if opts.on_exit then
+					opts.on_exit(code)
+				end
+			end)
+		end,
+	})
+
+	vim.cmd("startinsert")
+	return bufnr
 end
 
-function M.run(opts)
-	vim.validate({ opts = { opts, "table" }, cmd = { opts.cmd, { "string", "table" } } })
+-- -------------------------------------------------------------
+-- Run a command synchronously and capture its output.
+-- Prefer an argv list: it bypasses the shell entirely.
+-- -------------------------------------------------------------
+---@param cmd string|string[]
+---@return string output
+---@return integer code
+function M.capture(cmd)
+	local output = vim.fn.system(cmd)
+	return output, vim.v.shell_error
+end
 
-	local title = opts.title or "Task"
-	local running_text = opts.running or "Working..."
-	local interval = opts.interval or 100
-	local timeout = opts.timeout
-	if timeout == nil then
-		timeout = false
+-- -------------------------------------------------------------
+-- Run a command that emits JSON and decode it.
+-- -------------------------------------------------------------
+---@param cmd string|string[]
+---@return table|nil data
+---@return string|nil err
+function M.json(cmd)
+	local output, code = M.capture(cmd)
+	local ok, data = pcall(vim.json.decode, output)
+	if not ok then
+		return nil, string.format("failed to parse JSON (exit %d): %s", code, vim.trim(output))
 	end
-
-	local stop_spinner, current_notif = start_spinner(running_text, title, interval)
-	local stdout_accum = opts.collect_stdout == false and nil or {}
-	local stderr_accum = opts.collect_stderr == false and nil or {}
-
-	local function format_result(code)
-		local stdout = stdout_accum and table.concat(stdout_accum, "\n") or ""
-		local stderr = stderr_accum and table.concat(stderr_accum, "\n") or ""
-
-		if opts.format_output then
-			return opts.format_output(code, stdout, stderr)
-		end
-
-		if code == 0 then
-			if stdout ~= "" then
-				return stdout
-			end
-			return "Done."
-		end
-
-		if stderr ~= "" then
-			return stderr
-		end
-		if stdout ~= "" then
-			return stdout
-		end
-		return "Command failed."
-	end
-
-	local function finalize(code, message_override)
-		stop_spinner()
-		vim.schedule(function()
-			local message = message_override or format_result(code)
-			local level = code == 0 and vim.log.levels.INFO or vim.log.levels.ERROR
-			-- Use plain vim.notify
-			vim.notify(string.format("[%s] %s", title, vim.trim(message)), level)
-			if opts.on_done then
-				opts.on_done(code, message)
-			end
-		end)
-	end
-
-	local job_opts = {
-		stdout_buffered = true,
-		stderr_buffered = true,
-		on_stdout = function(_, data)
-			if opts.on_stdout then
-				opts.on_stdout(data)
-			end
-			collect_lines(stdout_accum, data)
-		end,
-		on_stderr = function(_, data)
-			if opts.on_stderr then
-				opts.on_stderr(data)
-			end
-			collect_lines(stderr_accum, data)
-		end,
-		on_exit = function(_, code)
-			if opts.on_exit then
-				opts.on_exit(code)
-			end
-			finalize(code)
-		end,
-	}
-
-	local job_id = vim.fn.jobstart(opts.cmd, job_opts)
-	if job_id <= 0 then
-		finalize(1, "Failed to start command.")
-	end
+	return data, nil
 end
 
 return M

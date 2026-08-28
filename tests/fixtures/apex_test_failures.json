@@ -1,0 +1,74 @@
+{
+  "status": 100,
+  "result": {
+    "summary": {
+      "outcome": "Failed",
+      "testsRan": 4,
+      "passing": 2,
+      "failing": 2,
+      "skipped": 0,
+      "passRate": "50%",
+      "failRate": "50%",
+      "testStartTime": "2026-08-28T15:00:00.000Z",
+      "testExecutionTime": "1234 ms",
+      "testTotalTime": "1500 ms",
+      "commandTime": "3000 ms",
+      "hostname": "https://example.my.salesforce.com",
+      "orgId": "00D000000000000EAA",
+      "username": "dev@example.com",
+      "testRunId": "707000000000000",
+      "userId": "005000000000000"
+    },
+    "tests": [
+      {
+        "Id": "07M000000000001",
+        "QueueItemId": "709000000000001",
+        "StackTrace": null,
+        "Message": null,
+        "AsyncApexJobId": "707000000000000",
+        "MethodName": "testCreatePasses",
+        "Outcome": "Pass",
+        "ApexClass": { "Id": "01p000000000001", "Name": "AccountServiceTest", "NamespacePrefix": null },
+        "RunTime": 120,
+        "FullName": "AccountServiceTest.testCreatePasses"
+      },
+      {
+        "Id": "07M000000000002",
+        "QueueItemId": "709000000000001",
+        "StackTrace": "Class.AccountServiceTest.testUpdateFails: line 42, column 1",
+        "Message": "System.AssertException: Assertion Failed: Expected: 1, Actual: 2",
+        "AsyncApexJobId": "707000000000000",
+        "MethodName": "testUpdateFails",
+        "Outcome": "Fail",
+        "ApexClass": { "Id": "01p000000000001", "Name": "AccountServiceTest", "NamespacePrefix": null },
+        "RunTime": 90,
+        "FullName": "AccountServiceTest.testUpdateFails"
+      },
+      {
+        "Id": "07M000000000003",
+        "QueueItemId": "709000000000001",
+        "StackTrace": "Class.AccountService.update: line 17, column 9\nClass.AccountServiceTest.testNoStackLine: line 55, column 1",
+        "Message": "System.NullPointerException: Attempt to de-reference a null object",
+        "AsyncApexJobId": "707000000000000",
+        "MethodName": "testNoStackLine",
+        "Outcome": "Fail",
+        "ApexClass": { "Id": "01p000000000001", "Name": "AccountServiceTest", "NamespacePrefix": null },
+        "RunTime": 80,
+        "FullName": "AccountServiceTest.testNoStackLine"
+      },
+      {
+        "Id": "07M000000000004",
+        "QueueItemId": "709000000000001",
+        "StackTrace": "Class.MissingClassTest.testSomething: line 3, column 1",
+        "Message": "System.AssertException: nope",
+        "AsyncApexJobId": "707000000000000",
+        "MethodName": "testSomething",
+        "Outcome": "Fail",
+        "ApexClass": { "Id": "01p000000000002", "Name": "MissingClassTest", "NamespacePrefix": null },
+        "RunTime": 10,
+        "FullName": "MissingClassTest.testSomething"
+      }
+    ]
+  },
+  "warnings": []
+}

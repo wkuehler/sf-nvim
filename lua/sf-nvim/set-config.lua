@@ -3,81 +3,66 @@
 
 local M = {}
 
+local runner = require("sf-nvim.utils.runner")
+
+local VALID_KEYS = { ["target-org"] = true, ["target-dev-hub"] = true }
+
+-- -------------------------------------------------------------
+-- Turn `sf org list --json` output into selectable items
+-- -------------------------------------------------------------
+---@class SfOrgItem
+---@field label string
+---@field alias string|nil
+---@field username string
+
+---@param data table decoded JSON from `sf org list --json`
+---@return SfOrgItem[]
+function M.build_org_items(data)
+	local items = {}
+	local result = type(data) == "table" and data.result or nil
+	if type(result) ~= "table" then
+		return items
+	end
+
+	for _, group in ipairs({ "nonScratchOrgs", "scratchOrgs" }) do
+		for _, org in ipairs(result[group] or {}) do
+			if org.username then
+				local label = org.alias and string.format("%s (%s)", org.alias, org.username) or org.username
+				if org.isDefaultUsername then
+					label = label .. " [default org]"
+				end
+				if org.isDefaultDevHubUsername then
+					label = label .. " [default hub]"
+				end
+				table.insert(items, { label = label, alias = org.alias, username = org.username })
+			end
+		end
+	end
+	return items
+end
+
 -- -------------------------------------------------------------
 -- Set SF config (target-org or target-dev-hub)
 -- -------------------------------------------------------------
+---@param config_key "target-org"|"target-dev-hub"
 function M.set_default(config_key)
-	-- Validate config_key
-	if config_key ~= "target-org" and config_key ~= "target-dev-hub" then
+	if not VALID_KEYS[config_key] then
 		vim.notify("Invalid config key. Use 'target-org' or 'target-dev-hub'", vim.log.levels.ERROR)
 		return
 	end
 
-	-- Get org list as JSON
-	local handle = io.popen("sf org list --json 2>&1")
-	if not handle then
-		vim.notify("Failed to execute sf org list command", vim.log.levels.ERROR)
+	local data, err = runner.json({ "sf", "org", "list", "--json" })
+	if not data then
+		vim.notify("sf org list: " .. err, vim.log.levels.ERROR)
 		return
 	end
 
-	local result = handle:read("*a")
-	handle:close()
-
-	-- Parse JSON
-	local ok, data = pcall(vim.json.decode, result)
-	if not ok then
-		vim.notify("Failed to parse org list JSON: " .. tostring(data), vim.log.levels.ERROR)
-		return
-	end
-
-	-- Check if we have orgs
-	if not data.result or not data.result.nonScratchOrgs or #data.result.nonScratchOrgs == 0 then
-		if not data.result or not data.result.scratchOrgs or #data.result.scratchOrgs == 0 then
-			vim.notify("No orgs found", vim.log.levels.WARN)
-			return
-		end
-	end
-
-	-- Combine scratch and non-scratch orgs
-	local orgs = {}
-	if data.result.nonScratchOrgs then
-		for _, org in ipairs(data.result.nonScratchOrgs) do
-			table.insert(orgs, org)
-		end
-	end
-	if data.result.scratchOrgs then
-		for _, org in ipairs(data.result.scratchOrgs) do
-			table.insert(orgs, org)
-		end
-	end
-
-	if #orgs == 0 then
+	local items = M.build_org_items(data)
+	if #items == 0 then
 		vim.notify("No orgs found", vim.log.levels.WARN)
 		return
 	end
 
-	-- Build options for vim.ui.select
-	local items = {}
-	for _, org in ipairs(orgs) do
-		local label = org.alias or org.username
-		if org.alias and org.username then
-			label = string.format("%s (%s)", org.alias, org.username)
-		end
-		-- Add indicator for default orgs
-		if org.isDefaultUsername then
-			label = label .. " [default org]"
-		end
-		if org.isDefaultDevHubUsername then
-			label = label .. " [default hub]"
-		end
-		table.insert(items, {
-			label = label,
-			alias = org.alias,
-			username = org.username,
-		})
-	end
-
-	-- Show selection UI
 	vim.ui.select(items, {
 		prompt = string.format("Select %s:", config_key),
 		format_item = function(item)
@@ -88,29 +73,16 @@ function M.set_default(config_key)
 			return
 		end
 
-		-- Use alias if available, otherwise username
 		local org_identifier = choice.alias or choice.username
-
-		-- Set the config
-		local cmd = string.format("sf config set %s %s", config_key, vim.fn.shellescape(org_identifier))
-		local set_handle = io.popen(cmd .. " 2>&1")
-		if not set_handle then
-			vim.notify("Failed to set " .. config_key, vim.log.levels.ERROR)
-			return
-		end
-
-		local output = set_handle:read("*a")
-		local exit_code = set_handle:close()
-
-		if exit_code then
+		local output, code = runner.capture({ "sf", "config", "set", config_key, org_identifier })
+		if code == 0 then
 			vim.notify(string.format("Set %s to %s", config_key, org_identifier), vim.log.levels.INFO)
 		else
-			vim.notify(string.format("Failed to set %s: %s", config_key, output), vim.log.levels.ERROR)
+			vim.notify(string.format("Failed to set %s: %s", config_key, vim.trim(output)), vim.log.levels.ERROR)
 		end
 	end)
 end
 
--- Convenience functions
 function M.set_target_org()
 	M.set_default("target-org")
 end

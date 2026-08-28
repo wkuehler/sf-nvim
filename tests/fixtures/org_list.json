@@ -1,0 +1,39 @@
+{
+  "status": 0,
+  "result": {
+    "other": [],
+    "sandboxes": [],
+    "nonScratchOrgs": [
+      {
+        "username": "devhub@example.com",
+        "orgId": "00D000000000001EAA",
+        "alias": "DevHub",
+        "isDefaultDevHubUsername": true,
+        "isDefaultUsername": false,
+        "isDevHub": true,
+        "connectedStatus": "Connected"
+      },
+      {
+        "username": "noalias@example.com",
+        "orgId": "00D000000000002EAA",
+        "isDefaultDevHubUsername": false,
+        "isDefaultUsername": false,
+        "connectedStatus": "Connected"
+      }
+    ],
+    "devHubs": [],
+    "scratchOrgs": [
+      {
+        "username": "test-abc@example.com",
+        "orgId": "00D000000000003EAA",
+        "alias": "issue123",
+        "isDefaultUsername": true,
+        "isDefaultDevHubUsername": false,
+        "devHubUsername": "devhub@example.com",
+        "expirationDate": "2026-09-04",
+        "status": "Active"
+      }
+    ]
+  },
+  "warnings": []
+}

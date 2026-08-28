@@ -1,0 +1,9 @@
+{
+  "name": "NoTestsFound",
+  "message": "No test methods found in class AccountService",
+  "exitCode": 1,
+  "context": "Test",
+  "stack": "NoTestsFound: ...",
+  "status": 1,
+  "warnings": []
+}

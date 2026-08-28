@@ -4,133 +4,64 @@
 local M = {}
 
 local runner = require("sf-nvim.utils.runner")
+local quickfix = require("sf-nvim.quickfix")
 
--- Default configuration
+-- Default configuration (overwritten by init.setup)
 M.config = {
 	test_results_dir = "test-results",
 	test_wait_time = 15,
-	test_format = "json",
 }
 
 -- -------------------------------------------------------------
--- Helper function to format Apex output
+-- Run tests (all, or a single class) in a terminal split and
+-- load failures into quickfix when the run finishes.
 -- -------------------------------------------------------------
-local function format_apex_output(code, stdout, stderr)
-	if code == 0 then
-		return stdout ~= "" and stdout or "Command succeeded."
+---@param class_name? string  nil runs the whole suite
+local function run_tests(class_name)
+	local results_dir = vim.fn.getcwd() .. "/" .. M.config.test_results_dir
+	vim.fn.mkdir(results_dir, "p")
+
+	local logfile = string.format("%s/%s_%s.json", results_dir, class_name or "all-tests", os.date("%Y%m%d%H%M%S"))
+
+	local base = { "sf", "apex", "run", "test", "-w", tostring(M.config.test_wait_time) }
+	if class_name then
+		vim.list_extend(base, { "--tests", class_name })
 	end
-	if stderr ~= "" then
-		return stderr
-	end
-	if stdout ~= "" then
-		return stdout
-	end
-	return "Command failed."
+
+	-- Run twice: once for machine-readable JSON, once for the human-readable stream.
+	local json_cmd = runner.shell_join(vim.list_extend(vim.deepcopy(base), { "--json" }))
+	local cmd = json_cmd .. " > " .. vim.fn.shellescape(logfile) .. "; " .. runner.shell_join(base)
+
+	runner.term(cmd, {
+		on_exit = function()
+			if quickfix.load_from_file(logfile) then
+				vim.cmd("copen")
+			end
+		end,
+	})
 end
 
 -- -------------------------------------------------------------
 -- Run Apex test for current class
 -- -------------------------------------------------------------
 function M.run_test()
+	if vim.fn.expand("%:e") ~= "cls" then
+		vim.notify("Current file is not an Apex class (.cls)", vim.log.levels.WARN)
+		return
+	end
 	local target = vim.fn.expand("%:t:r")
 	if target == "" then
 		vim.notify("No filename to test", vim.log.levels.WARN)
 		return
 	end
-
-	-- Validate that current file is an Apex class
-	local extension = vim.fn.expand("%:e")
-	if extension ~= "cls" then
-		vim.notify("Current file is not an Apex class (.cls)", vim.log.levels.WARN)
-		return
-	end
-
-	-- Create test-results directory if it doesn't exist
-	local test_results_dir = vim.fn.getcwd() .. "/" .. M.config.test_results_dir
-	vim.fn.mkdir(test_results_dir, "p")
-
-	-- Generate timestamped log file
-	local timestamp = os.date("%Y%m%d%H%M%S")
-	local logfile = string.format("%s/%s_%s.json", test_results_dir, target, timestamp)
-
-	-- Build command to run tests and save JSON output
-	local cmd = string.format(
-		"sf apex run test -w %d --tests %s --json > %s; sf apex run test -w %d --tests %s; echo ''; read -p 'Press ENTER to close...'",
-		M.config.test_wait_time,
-		target,
-		vim.fn.shellescape(logfile),
-		M.config.test_wait_time,
-		target
-	)
-
-	-- Open in terminal for better output visibility
-	vim.cmd(string.format("botright split | terminal bash -c %s", vim.fn.shellescape(cmd)))
-
-	-- Set up autocmd to load quickfix when terminal closes
-	local bufnr = vim.api.nvim_get_current_buf()
-	vim.api.nvim_create_autocmd("TermClose", {
-		buffer = bufnr,
-		once = true,
-		callback = function()
-			vim.schedule(function()
-				-- Close the terminal buffer (check validity first)
-				if vim.api.nvim_buf_is_valid(bufnr) then
-					vim.api.nvim_buf_delete(bufnr, { force = true })
-				end
-				-- Load quickfix
-				local quickfix = require("sf-nvim.quickfix")
-				quickfix.load_from_file(logfile)
-				vim.cmd("copen")
-			end)
-		end,
-	})
-
-	vim.cmd("startinsert")
+	run_tests(target)
 end
 
 -- -------------------------------------------------------------
 -- Run all Apex tests
 -- -------------------------------------------------------------
 function M.run_all_tests()
-	-- Create test-results directory if it doesn't exist
-	local test_results_dir = vim.fn.getcwd() .. "/" .. M.config.test_results_dir
-	vim.fn.mkdir(test_results_dir, "p")
-
-	-- Generate timestamped log file
-	local timestamp = os.date("%Y%m%d%H%M%S")
-	local logfile = string.format("%s/all-tests_%s.json", test_results_dir, timestamp)
-
-	-- Build command to run tests and save JSON output
-	local cmd = string.format(
-		"sf apex run test -w %d --json > %s; sf apex run test -w %d; echo ''; read -p 'Press ENTER to close...'",
-		M.config.test_wait_time,
-		vim.fn.shellescape(logfile),
-		M.config.test_wait_time
-	)
-
-	-- Open in terminal for better output visibility
-	vim.cmd(string.format("botright split | terminal bash -c %s", vim.fn.shellescape(cmd)))
-
-	-- Set up autocmd to load quickfix when terminal closes
-	local bufnr = vim.api.nvim_get_current_buf()
-	vim.api.nvim_create_autocmd("TermClose", {
-		buffer = bufnr,
-		once = true,
-		callback = function()
-			vim.schedule(function()
-				-- Close the terminal buffer (check validity first)
-				if vim.api.nvim_buf_is_valid(bufnr) then
-					vim.api.nvim_buf_delete(bufnr, { force = true })
-				end
-				-- Load quickfix
-				local quickfix = require("sf-nvim.quickfix")
-				quickfix.load_from_file(logfile)
-				vim.cmd("copen")
-			end)
-		end,
-	})
-
-	vim.cmd("startinsert")
+	run_tests(nil)
 end
 
 -- -------------------------------------------------------------
@@ -142,45 +73,33 @@ function M.execute_script()
 		vim.notify("No file to execute", vim.log.levels.WARN)
 		return
 	end
-
-	-- Open in terminal for better output visibility
-	vim.cmd(string.format("split | terminal sf apex run -f %s", vim.fn.shellescape(target)))
-	vim.cmd("startinsert")
+	runner.term({ "sf", "apex", "run", "-f", target })
 end
 
 -- -------------------------------------------------------------
 -- Clear test results directory
 -- -------------------------------------------------------------
 function M.clear_test_results()
-	local test_results_dir = vim.fn.getcwd() .. "/" .. M.config.test_results_dir
+	local results_dir = vim.fn.getcwd() .. "/" .. M.config.test_results_dir
 
-	-- Check if directory exists
-	if vim.fn.isdirectory(test_results_dir) == 0 then
+	if vim.fn.isdirectory(results_dir) == 0 then
 		vim.notify("Test results directory does not exist", vim.log.levels.INFO)
 		return
 	end
 
-	-- Count files before deletion
-	local files = vim.fn.glob(test_results_dir .. "/*", false, true)
-	local file_count = #files
-
-	if file_count == 0 then
+	local files = vim.fn.glob(results_dir .. "/*", false, true)
+	local n = #files
+	if n == 0 then
 		vim.notify("Test results directory is already empty", vim.log.levels.INFO)
 		return
 	end
 
-	-- Ask for confirmation
-	local response = vim.fn.confirm(
-		string.format("Delete %d test result file%s?", file_count, file_count > 1 and "s" or ""),
-		"&Yes\n&No",
-		2
-	)
-
+	local plural = n > 1 and "s" or ""
+	local response = vim.fn.confirm(string.format("Delete %d test result file%s?", n, plural), "&Yes\n&No", 2)
 	if response == 1 then
-		-- Delete all files in the directory
-		vim.fn.delete(test_results_dir, "rf")
-		vim.fn.mkdir(test_results_dir, "p")
-		vim.notify(string.format("Cleared %d test result file%s", file_count, file_count > 1 and "s" or ""), vim.log.levels.INFO)
+		vim.fn.delete(results_dir, "rf")
+		vim.fn.mkdir(results_dir, "p")
+		vim.notify(string.format("Cleared %d test result file%s", n, plural), vim.log.levels.INFO)
 	end
 end
 

@@ -18,23 +18,39 @@ Everything runs in terminal splits at the bottom of the screen, so you can see w
 - Salesforce CLI (`sf`) installed and configured
 - `ripgrep` (for finding Apex class files)
 
+Run `:checkhealth sf-nvim` to verify all of the above (and that the current directory is an SFDX project).
+
 ## Installation
 
-Using lazy.nvim with local development:
+Using lazy.nvim:
 
 ```lua
 {
     'wkuehler/sf-nvim',
-    config = function()
-        require('sf-nvim').setup({
-            enable_default_keybinds = true,
-            leader_prefix = "<leader>s",
-            test_results_dir = "test-results",
-            test_wait_time = 15,  -- minutes
-        })
-    end
+    opts = {
+        enable_default_keybinds = true,
+        leader_prefix = "<leader>s",
+        test_results_dir = "test-results",
+        test_wait_time = 15,  -- minutes
+    },
 }
 ```
+
+## Commands
+
+Everything is available as `:Sf <group> <action>` (tab-completes):
+
+| Command | What it does |
+|---|---|
+| `:Sf test current` | Run tests for the current `.cls`, failures → quickfix |
+| `:Sf test all` | Run the whole test suite |
+| `:Sf test load` | Load the latest saved results into quickfix |
+| `:Sf test clear` | Delete the test results directory |
+| `:Sf apex execute` | Run current file as anonymous Apex |
+| `:Sf org open` / `list` / `info` | Open in browser / list orgs / `sf org display` |
+| `:Sf org create` | Create a scratch org (pick config, days, alias) |
+| `:Sf config org` / `hub` | Set `target-org` / `target-dev-hub` from a picker |
+| `:Sf project deploy` / `retrieve` / `validate` | Deploy / retrieve / dry-run deploy |
 
 ## Features
 
@@ -115,9 +131,12 @@ With `enable_default_keybinds = true` and `leader_prefix = "<leader>s"`:
 2. Pick from list of orgs
 3. See confirmation message
 
-## Security Note
+## Development
 
-I added some basic sanitization to prevent shell injection when parsing test results. It's not bulletproof, but it's good enough for my use case. Don't use this in untrusted environments.
+```sh
+make test                                    # run the suite (needs plenary.nvim)
+make test-file FILE=tests/quickfix_spec.lua  # one spec
+```
 
 ## Known Limitations
 
