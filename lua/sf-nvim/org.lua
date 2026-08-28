@@ -8,6 +8,7 @@ local runner = require("sf-nvim.utils.runner")
 -- -------------------------------------------------------------
 -- Open the default org in browser
 -- -------------------------------------------------------------
+---`sf org open` in a terminal split.
 function M.open()
 	runner.term({ "sf", "org", "open" })
 end
@@ -15,6 +16,7 @@ end
 -- -------------------------------------------------------------
 -- List all orgs
 -- -------------------------------------------------------------
+---`sf org list` in a terminal split.
 function M.list()
 	runner.term({ "sf", "org", "list" })
 end
@@ -22,6 +24,7 @@ end
 -- -------------------------------------------------------------
 -- Display org information
 -- -------------------------------------------------------------
+---`sf org display` in a terminal split.
 function M.display()
 	runner.term({ "sf", "org", "display" })
 end
@@ -29,7 +32,11 @@ end
 -- -------------------------------------------------------------
 -- Find scratch org definition files under <cwd>/config
 -- -------------------------------------------------------------
----@return {label: string, path: string}[]
+---@class SfScratchDef
+---@field label string  path relative to cwd, for display
+---@field path string   absolute path
+
+---@return SfScratchDef[]
 function M.find_scratch_defs()
 	local cwd = vim.fn.getcwd()
 	local config_dir = cwd .. "/config"
@@ -46,6 +53,7 @@ end
 -- -------------------------------------------------------------
 -- Create scratch org
 -- -------------------------------------------------------------
+---Prompt for definition file, duration and alias, then `sf org create scratch`.
 function M.create_scratch_org()
 	local items = M.find_scratch_defs()
 	if #items == 0 then

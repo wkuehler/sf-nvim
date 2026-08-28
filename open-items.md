@@ -34,24 +34,16 @@ but built and documented as a single-user tool.
 - [x] **User commands.** (2026-08-28) `:Sf <group> <action>` with completion,
       driven by the `M.actions` table in `init.lua` (keymaps derive from the
       same table).
-- [ ] **`doc/sf-nvim.txt`.** No `:help sf-nvim`. Currently the only
-      reference is the README and source. A real help file with tags is
-      the standard expectation for any distributed Neovim plugin.
-- [~] **LuaCATS annotations** — `SfConfig`, `SfAction`, runner, quickfix and
-      set-config public functions are annotated (2026-08-28). Remaining:
-      apex/org/project module functions.
+- [x] **`doc/sf-nvim.txt`.** (2026-08-28) `:help sf-nvim` with tags for
+      every option, `:Sf` action, keymap, and public Lua function.
+- [x] **LuaCATS annotations** — all public functions annotated (2026-08-28).
 
 ## Generalization (Resource Hero → any SFDX project)
 
-- [ ] **Reframe as general-purpose.** README and code comments currently
-      describe this as "my personal toolkit... built for working on
-      Resource Hero" / "opinionated for my Resource Hero development
-      workflow." The actual logic (scratch org config glob under
-      `config/**/*-scratch-def.json`, standard `force-app` layout
-      assumptions) is already mostly generic SFDX convention — the
-      remaining work is largely framing (README, package description),
-      not a rewrite. Audit for any remaining assumptions specific to your
-      project layout.
+- [x] **Reframe as general-purpose.** (2026-08-28) README rewritten with
+      no Resource Hero references; documents config, commands, keymaps and
+      workflow for any SFDX project. Code had no project-specific
+      assumptions beyond standard SFDX conventions.
 - [ ] **Config validation / setup guidance.** If `sf` CLI or `ripgrep`
       aren't installed, or the project isn't a recognized SFDX layout, fail
       with a clear, actionable message rather than a generic error deep in

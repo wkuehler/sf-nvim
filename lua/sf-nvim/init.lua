@@ -144,6 +144,7 @@ function M.setup(opts)
 
 	M.apex.config.test_results_dir = M.config.test_results_dir
 	M.apex.config.test_wait_time = M.config.test_wait_time
+	M.apex.config.auto_open_quickfix = M.config.auto_open_quickfix
 
 	setup_commands()
 	if M.config.enable_default_keybinds then

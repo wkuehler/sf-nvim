@@ -6,10 +6,17 @@ local M = {}
 local runner = require("sf-nvim.utils.runner")
 local quickfix = require("sf-nvim.quickfix")
 
+---@class SfApexConfig
+---@field test_results_dir string  relative to cwd
+---@field test_wait_time integer   minutes for `sf apex run test -w`
+---@field auto_open_quickfix boolean open quickfix when a run has failures
+
 -- Default configuration (overwritten by init.setup)
+---@type SfApexConfig
 M.config = {
 	test_results_dir = "test-results",
 	test_wait_time = 15,
+	auto_open_quickfix = true,
 }
 
 -- -------------------------------------------------------------
@@ -34,7 +41,7 @@ local function run_tests(class_name)
 
 	runner.term(cmd, {
 		on_exit = function()
-			if quickfix.load_from_file(logfile) then
+			if quickfix.load_from_file(logfile) and M.config.auto_open_quickfix then
 				vim.cmd("copen")
 			end
 		end,
@@ -44,6 +51,7 @@ end
 -- -------------------------------------------------------------
 -- Run Apex test for current class
 -- -------------------------------------------------------------
+---Run the tests in the current `.cls` buffer; failures are loaded into quickfix.
 function M.run_test()
 	if vim.fn.expand("%:e") ~= "cls" then
 		vim.notify("Current file is not an Apex class (.cls)", vim.log.levels.WARN)
@@ -60,6 +68,7 @@ end
 -- -------------------------------------------------------------
 -- Run all Apex tests
 -- -------------------------------------------------------------
+---Run every test in the org; failures are loaded into quickfix.
 function M.run_all_tests()
 	run_tests(nil)
 end
@@ -67,6 +76,7 @@ end
 -- -------------------------------------------------------------
 -- Execute anonymous Apex script from current file
 -- -------------------------------------------------------------
+---Run the current buffer's file with `sf apex run -f`.
 function M.execute_script()
 	local target = vim.fn.expand("%:p")
 	if target == "" then
@@ -79,6 +89,7 @@ end
 -- -------------------------------------------------------------
 -- Clear test results directory
 -- -------------------------------------------------------------
+---Delete every file under `<cwd>/<test_results_dir>` after confirmation.
 function M.clear_test_results()
 	local results_dir = vim.fn.getcwd() .. "/" .. M.config.test_results_dir
 

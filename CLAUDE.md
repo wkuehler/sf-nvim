@@ -32,7 +32,8 @@ nvim --cmd 'set rtp+=/home/bill/projects/sf-nvim' \
 ```
 
 Nothing is loaded until `require("sf-nvim").setup()` is called — there is no `plugin/`
-directory and no `doc/` yet. `:checkhealth sf-nvim` (`health.lua`) works without `setup()`.
+directory. `doc/sf-nvim.txt` is the help file — update it alongside README and
+`M.actions` when commands/options change. `:checkhealth sf-nvim` (`health.lua`) works without `setup()`.
 CI (`.github/workflows/ci.yml`) runs stylua, luacheck, and the tests on nvim 0.9.5/stable/nightly. Formatting is tabs, 120 columns (`stylua.toml`).
 
 ## Architecture

@@ -1,154 +1,132 @@
 # sf-nvim
 
-My personal Salesforce development toolkit for Neovim, built for working on Resource Hero. It's not fancy, but it gets the job done.
+Salesforce CLI (`sf`) integration for Neovim. Run Apex tests with failures in
+quickfix, deploy and retrieve metadata, manage orgs and scratch orgs, and execute
+anonymous Apex — without leaving the editor.
 
-## What This Does
-
-This plugin wraps the Salesforce CLI (`sf`) with some Neovim conveniences:
-- Run Apex tests and see failures in quickfix
-- Deploy/retrieve metadata without leaving Neovim
-- Manage orgs and scratch orgs
-- Execute anonymous Apex
-
-Everything runs in terminal splits at the bottom of the screen, so you can see what's actually happening. No magic, just CLI commands in Neovim.
+Everything runs in a terminal split at the bottom of the screen, so you see exactly
+what the CLI is doing. No background magic, no custom UI: just `sf` commands in
+Neovim, with `vim.notify` / `vim.ui.select` for feedback and pickers (so it works
+with whatever UI plugins you already have, or none).
 
 ## Requirements
 
 - Neovim >= 0.7
-- Salesforce CLI (`sf`) installed and configured
-- `ripgrep` (for finding Apex class files)
+- [Salesforce CLI](https://developer.salesforce.com/tools/salesforcecli) (`sf`) installed and authenticated
+- [ripgrep](https://github.com/BurntSushi/ripgrep) (`rg`) — used to locate Apex class files for quickfix
+- An SFDX project: open Neovim from the directory containing `sfdx-project.json`
+  (the plugin uses the current working directory as the project root)
 
-Run `:checkhealth sf-nvim` to verify all of the above (and that the current directory is an SFDX project).
+Run `:checkhealth sf-nvim` to verify all of the above.
 
 ## Installation
 
-Using lazy.nvim:
+[lazy.nvim](https://github.com/folke/lazy.nvim):
 
 ```lua
 {
-    'wkuehler/sf-nvim',
+    "wkuehler/sf-nvim",
     opts = {
         enable_default_keybinds = true,
-        leader_prefix = "<leader>s",
-        test_results_dir = "test-results",
-        test_wait_time = 15,  -- minutes
     },
 }
 ```
 
+Any plugin manager works — just call `require("sf-nvim").setup({ ... })` once.
+
+## Configuration
+
+Defaults:
+
+```lua
+require("sf-nvim").setup({
+    test_results_dir = "test-results",   -- where test JSON is saved, relative to cwd
+    auto_open_quickfix = true,           -- open quickfix when a test run has failures
+    test_wait_time = 15,                 -- minutes passed to `sf apex run test -w`
+    enable_default_keybinds = false,     -- install the keymaps listed below
+    leader_prefix = "<leader>s",         -- prefix for those keymaps
+})
+```
+
+Add `test-results/` (or whatever you set) to your `.gitignore`.
+
 ## Commands
 
-Everything is available as `:Sf <group> <action>` (tab-completes):
+Everything is available as `:Sf <group> <action>` with tab completion:
 
 | Command | What it does |
 |---|---|
-| `:Sf test current` | Run tests for the current `.cls`, failures → quickfix |
-| `:Sf test all` | Run the whole test suite |
-| `:Sf test load` | Load the latest saved results into quickfix |
-| `:Sf test clear` | Delete the test results directory |
-| `:Sf apex execute` | Run current file as anonymous Apex |
-| `:Sf org open` / `list` / `info` | Open in browser / list orgs / `sf org display` |
-| `:Sf org create` | Create a scratch org (pick config, days, alias) |
-| `:Sf config org` / `hub` | Set `target-org` / `target-dev-hub` from a picker |
-| `:Sf project deploy` / `retrieve` / `validate` | Deploy / retrieve / dry-run deploy |
+| `:Sf test current` | Run tests for the current `.cls`; failures go to quickfix |
+| `:Sf test all` | Run the whole Apex test suite |
+| `:Sf test load` | Load the most recent saved results into quickfix |
+| `:Sf test clear` | Delete saved test results (asks first) |
+| `:Sf apex execute` | Run the current file as anonymous Apex |
+| `:Sf org open` | Open the target org in a browser |
+| `:Sf org list` | `sf org list` |
+| `:Sf org info` | `sf org display` |
+| `:Sf org create` | Create a scratch org: pick a `*-scratch-def.json`, enter days and alias |
+| `:Sf config org` | Set `target-org` from a picker of authenticated orgs |
+| `:Sf config hub` | Set `target-dev-hub` from a picker of Dev Hubs |
+| `:Sf project deploy` | `sf project deploy start` |
+| `:Sf project retrieve` | `sf project retrieve start` |
+| `:Sf project validate` | `sf project deploy start --dry-run` |
 
-## Features
+Full reference: `:help sf-nvim`.
 
-### Apex Testing
-- Run tests for current class or all tests
-- Results open in terminal at bottom, press ENTER to close
-- Test failures automatically populate quickfix list
-- Jump directly to failing lines with `:cn` and `:cp`
-- Clear old test results with one command
+## Default keybindings
 
-### Org Management
-- List and display org info in terminal
-- Set target-org and target-dev-hub with interactive selection
-- Create scratch orgs (picks config file, asks for days/alias)
-- Open org in browser
+With `enable_default_keybinds = true` and the default `leader_prefix = "<leader>s"`:
 
-### Project Deployment
-- Deploy, retrieve, and validate in terminal splits
-- See real-time output (no background magic)
-- Press ENTER to close when done
+| Key | Command |
+|---|---|
+| `<leader>stc` | `:Sf test current` |
+| `<leader>sta` | `:Sf test all` |
+| `<leader>stl` | `:Sf test load` |
+| `<leader>stx` | `:Sf test clear` |
+| `<leader>se`  | `:Sf apex execute` |
+| `<leader>soo` | `:Sf org open` |
+| `<leader>sol` | `:Sf org list` |
+| `<leader>soi` | `:Sf org info` |
+| `<leader>soc` | `:Sf org create` |
+| `<leader>sco` | `:Sf config org` |
+| `<leader>sch` | `:Sf config hub` |
+| `<leader>spd` | `:Sf project deploy` |
+| `<leader>spr` | `:Sf project retrieve` |
+| `<leader>spv` | `:Sf project validate` |
 
-### Anonymous Apex
-- Execute current file as anonymous Apex
-- Output shown in terminal
+To define your own instead, leave `enable_default_keybinds` off and map to the
+`:Sf` commands (or to the functions in `require("sf-nvim").actions`).
 
-## Default Keybindings
+## Workflow
 
-With `enable_default_keybinds = true` and `leader_prefix = "<leader>s"`:
+**Tests.** Open a test class and run `:Sf test current`. The run streams in a
+terminal split; press ENTER when it finishes. Failures (including compile
+failures) are loaded into quickfix with file, line, column and message — `:cn` /
+`:cp` to jump between them. Results are also saved as JSON under
+`test_results_dir`, so `:Sf test load` can reload the latest run later.
 
-**Apex Testing:**
-- `<leader>stc` - Run test for current class (validates .cls extension)
-- `<leader>sta` - Run all Apex tests
-- `<leader>stx` - Clear test results directory
-- `<leader>stl` - Load latest test results into quickfix
-- `<leader>se` - Execute current file as anonymous Apex
+**Deploy.** `:Sf project validate` for a dry run, check the output, then
+`:Sf project deploy`.
 
-**Org Management:**
-- `<leader>soo` - Open org in browser
-- `<leader>sol` - List all orgs
-- `<leader>soi` - Display org info
-- `<leader>soc` - Create scratch org (interactive)
+**Scratch orgs.** `:Sf org create` finds every `config/**/*-scratch-def.json`
+in the project and prompts for duration and alias. `:Sf config org` switches
+the target org from a picker afterwards.
 
-**Config/Set Defaults:**
-- `<leader>sco` - Set target-org (with selection menu)
-- `<leader>sch` - Set target-dev-hub (with selection menu)
+## Known limitations
 
-**Project Deployment:**
-- `<leader>spd` - Deploy project
-- `<leader>spr` - Retrieve from org
-- `<leader>spv` - Validate deployment (dry-run)
-
-## How I Use This
-
-### Running Tests
-1. Open a test class
-2. `<leader>stc` to run tests for current class
-3. Tests run in terminal at bottom, watch the output
-4. Press ENTER when done
-5. Quickfix opens with failures (if any)
-6. `:cn` to jump through failures
-
-### Creating Scratch Orgs
-1. `<leader>soc`
-2. Pick config file from menu
-3. Enter duration in days (default 7)
-4. Enter alias
-5. Watch it create in terminal
-
-### Deploying
-1. `<leader>spv` to validate (dry-run)
-2. Check output in terminal
-3. Press ENTER to close
-4. `<leader>spd` to actually deploy
-5. Watch it deploy in terminal
-
-### Switching Orgs
-1. `<leader>sco` to set target-org
-2. Pick from list of orgs
-3. See confirmation message
+- Commands block in a terminal split until they finish; there is no background
+  execution yet.
+- Quickfix parsing depends on the `sf apex run test --json` output shape.
+- Class file lookup assumes the standard `<Name>.cls` file naming.
 
 ## Development
 
 ```sh
-make test                                    # run the suite (needs plenary.nvim)
+make test                                    # plenary.nvim test suite
 make test-file FILE=tests/quickfix_spec.lua  # one spec
+make lint / make fmt                         # luacheck / stylua
 ```
-
-## Known Limitations
-
-- No async/background execution - everything blocks until complete
-- Test results parsing assumes SF CLI JSON format (will gracefully fail if format changes)
-- Class file finding uses ripgrep with glob patterns (requires standard project structure)
-- No fancy UI - just terminal splits and plain notifications
-
-## Why This Exists
-
-I got tired of switching between Neovim and terminal to run SF CLI commands. This just wraps the CLI so I can stay in my editor. It's opinionated for my Resource Hero development workflow, not a comprehensive SF tool.
 
 ## License
 
-MIT - do whatever you want with it.
+MIT

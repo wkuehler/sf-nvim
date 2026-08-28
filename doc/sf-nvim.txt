@@ -1,0 +1,252 @@
+*sf-nvim.txt*          Salesforce CLI integration for Neovim
+
+==============================================================================
+CONTENTS                                                    *sf-nvim-contents*
+
+    1. Introduction ............................ |sf-nvim-introduction|
+    2. Requirements ............................ |sf-nvim-requirements|
+    3. Setup ................................... |sf-nvim-setup|
+    4. Configuration ........................... |sf-nvim-config|
+    5. Commands ................................ |sf-nvim-commands|
+    6. Keymaps ................................. |sf-nvim-keymaps|
+    7. Test results and quickfix ............... |sf-nvim-quickfix|
+    8. Lua API ................................. |sf-nvim-api|
+    9. Health check ............................ |sf-nvim-health|
+
+==============================================================================
+1. INTRODUCTION                                         *sf-nvim-introduction*
+
+sf-nvim wraps the Salesforce CLI (`sf`) so common SFDX tasks can be run from
+inside Neovim: Apex tests with failures in the quickfix list, deploy/retrieve,
+org and scratch org management, and anonymous Apex execution.
+
+Commands run in a terminal split at the bottom of the screen. The split stays
+open until you press <Enter>, so the full CLI output is always visible. User
+feedback goes through |vim.notify()|, |vim.ui.select()| and |vim.ui.input()|,
+so the plugin picks up whatever UI overrides you already use.
+
+==============================================================================
+2. REQUIREMENTS                                         *sf-nvim-requirements*
+
+- Neovim 0.7 or later
+- Salesforce CLI (`sf`) on $PATH and authenticated to at least one org
+- ripgrep (`rg`) on $PATH, used to find Apex class files for quickfix
+- An SFDX project. The plugin treats the current working directory (see
+  |getcwd()|) as the project root; start Neovim from the directory that
+  contains `sfdx-project.json`.
+
+Run `:checkhealth sf-nvim` to confirm. See |sf-nvim-health|.
+
+==============================================================================
+3. SETUP                                                       *sf-nvim-setup*
+
+Nothing is registered until |sf-nvim.setup()| is called: >lua
+
+    require("sf-nvim").setup({
+        enable_default_keybinds = true,
+    })
+<
+With lazy.nvim: >lua
+
+    { "wkuehler/sf-nvim", opts = { enable_default_keybinds = true } }
+<
+==============================================================================
+4. CONFIGURATION                                              *sf-nvim-config*
+
+All options with their defaults: >lua
+
+    require("sf-nvim").setup({
+        test_results_dir = "test-results",
+        auto_open_quickfix = true,
+        test_wait_time = 15,
+        enable_default_keybinds = false,
+        leader_prefix = "<leader>s",
+    })
+<
+                                              *sf-nvim-config.test_results_dir*
+test_results_dir        (string, default `"test-results"`)
+        Directory, relative to the project root, where the JSON output of
+        each test run is saved as `<Class>_<timestamp>.json` (or
+        `all-tests_<timestamp>.json`). Add it to `.gitignore`.
+
+                                            *sf-nvim-config.auto_open_quickfix*
+auto_open_quickfix      (boolean, default `true`)
+        Open the quickfix window automatically when a test run produced
+        failures.
+
+                                                *sf-nvim-config.test_wait_time*
+test_wait_time          (integer, default `15`)
+        Minutes passed to `sf apex run test -w`. The CLI polls for that long
+        before giving up on a run.
+
+                                       *sf-nvim-config.enable_default_keybinds*
+enable_default_keybinds (boolean, default `false`)
+        Install the keymaps listed in |sf-nvim-keymaps|.
+
+                                                 *sf-nvim-config.leader_prefix*
+leader_prefix           (string, default `"<leader>s"`)
+        Prefix for the default keymaps.
+
+==============================================================================
+5. COMMANDS                                                 *sf-nvim-commands*
+
+                                                                         *:Sf*
+:Sf {group} {action}
+        Single entry point for every action. Both arguments tab-complete.
+
+Test group ~
+                                                            *:Sf-test-current*
+:Sf test current
+        Run the tests in the Apex class in the current buffer (the file must
+        have a `.cls` extension). When the run finishes, failures are loaded
+        into quickfix. See |sf-nvim-quickfix|.
+
+                                                                *:Sf-test-all*
+:Sf test all
+        Run every test in the org, same result handling as above.
+
+                                                               *:Sf-test-load*
+:Sf test load
+        Load the most recent saved result file from
+        |sf-nvim-config.test_results_dir| into quickfix and open it.
+
+                                                              *:Sf-test-clear*
+:Sf test clear
+        Delete all saved result files, after confirmation.
+
+Apex group ~
+                                                            *:Sf-apex-execute*
+:Sf apex execute
+        Run the current file as anonymous Apex (`sf apex run -f {file}`).
+
+Org group ~
+                                                                *:Sf-org-open*
+:Sf org open            `sf org open`
+                                                                *:Sf-org-list*
+:Sf org list            `sf org list`
+                                                                *:Sf-org-info*
+:Sf org info            `sf org display`
+                                                              *:Sf-org-create*
+:Sf org create
+        Create a scratch org. Prompts, in order, for a definition file
+        (every `config/**/*-scratch-def.json` in the project), duration in
+        days (default 7), and an alias; then runs
+        `sf org create scratch --definition-file ... --duration-days ... --alias ...`.
+
+Config group ~
+                                                              *:Sf-config-org*
+:Sf config org
+        Pick from the authenticated orgs and set it as `target-org`
+        (`sf config set target-org`).
+
+                                                              *:Sf-config-hub*
+:Sf config hub
+        Pick from the authenticated Dev Hubs and set `target-dev-hub`.
+
+Project group ~
+                                                          *:Sf-project-deploy*
+:Sf project deploy      `sf project deploy start`
+                                                        *:Sf-project-retrieve*
+:Sf project retrieve    `sf project retrieve start`
+                                                        *:Sf-project-validate*
+:Sf project validate    `sf project deploy start --dry-run`
+
+==============================================================================
+6. KEYMAPS                                                   *sf-nvim-keymaps*
+
+Installed only when |sf-nvim-config.enable_default_keybinds| is true. Shown
+with the default prefix `<leader>s`:
+
+    <leader>stc     :Sf test current
+    <leader>sta     :Sf test all
+    <leader>stl     :Sf test load
+    <leader>stx     :Sf test clear
+    <leader>se      :Sf apex execute
+    <leader>soo     :Sf org open
+    <leader>sol     :Sf org list
+    <leader>soi     :Sf org info
+    <leader>soc     :Sf org create
+    <leader>sco     :Sf config org
+    <leader>sch     :Sf config hub
+    <leader>spd     :Sf project deploy
+    <leader>spr     :Sf project retrieve
+    <leader>spv     :Sf project validate
+
+To define your own, leave the option off and map to |:Sf| or to the functions
+in `require("sf-nvim").actions` (see |sf-nvim-api|).
+
+==============================================================================
+7. TEST RESULTS AND QUICKFIX                                *sf-nvim-quickfix*
+
+A test run invokes `sf apex run test` twice: once with `--json`, redirected to
+a timestamped file in |sf-nvim-config.test_results_dir|, and once plain so the
+terminal split shows readable progress. When the split closes the JSON file is
+parsed; every test whose outcome is `Fail` or `CompileFail` becomes a quickfix
+entry with:
+
+- the class file, located with `rg --files --glob '**/<Class>.cls'`
+- line and column, taken from the first `line N, column M` in the stack trace
+- the failure message
+
+A summary is shown with |vim.notify()|. Failures whose class file could not be
+found are counted in that summary rather than dropped. Use |:cnext| and
+|:cprevious| to move between failures.
+
+==============================================================================
+8. LUA API                                                       *sf-nvim-api*
+
+                                                             *sf-nvim.setup()*
+require("sf-nvim").setup({opts})
+        Merge {opts} over the defaults (|sf-nvim-config|), register |:Sf| and,
+        if enabled, the default keymaps.
+
+                                                              *sf-nvim.config*
+require("sf-nvim").config
+        The effective configuration after |sf-nvim.setup()|.
+
+                                                             *sf-nvim.actions*
+require("sf-nvim").actions
+        Table of `group -> action -> { fn, desc, key }`. This is the source
+        for both |:Sf| completion and the default keymaps; call `.fn()` to
+        invoke an action directly, e.g. >lua
+
+            require("sf-nvim").actions.test.current.fn()
+<
+Module functions (all take no arguments unless noted):
+
+    require("sf-nvim.apex")
+        .run_test()             tests for the current class
+        .run_all_tests()
+        .execute_script()       current file as anonymous Apex
+        .clear_test_results()
+
+    require("sf-nvim.org")
+        .open() .list() .display()
+        .create_scratch_org()
+        .find_scratch_defs()    -> { {label, path}, ... }
+
+    require("sf-nvim.project")
+        .deploy() .retrieve() .validate()
+
+    require("sf-nvim.set-config")
+        .set_target_org() .set_target_dev_hub()
+
+    require("sf-nvim.quickfix")
+        .load_from_file({path})             -> boolean (had failures)
+        .load_and_open({results_dir})
+        .find_latest_test_results({dir})    -> path|nil
+        .parse_test_results({json}, {find}) -> items, missing
+
+==============================================================================
+9. HEALTH CHECK                                               *sf-nvim-health*
+
+`:checkhealth sf-nvim` reports:
+
+- the Neovim version against the supported floor
+- whether `sf` and `rg` are on $PATH, and their versions
+- whether the current directory contains `sfdx-project.json` and any
+  `config/**/*-scratch-def.json` files
+
+It works before |sf-nvim.setup()| has been called.
+
+vim:tw=78:ts=8:ft=help:norl:
