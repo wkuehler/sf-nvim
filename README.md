@@ -6,6 +6,9 @@ anonymous Apex — without leaving the editor.
 
 Long-running commands (tests, deploys, scratch org creation) run in a terminal
 split at the bottom of the screen, so you see exactly what the CLI is doing.
+The split opens in Normal mode following the output, so you can scroll back
+with the usual keys at any time; when the command finishes, `Enter` or `q`
+closes it.
 Quick lookups (listing orgs for a picker, setting the target org, opening an org)
 run in the background without blocking the editor. No custom UI: feedback and
 pickers go through `vim.notify` / `vim.ui.select`, so it works with whatever UI
@@ -117,7 +120,7 @@ this automatically on every `:w` of a file under a package directory.
 
 **Tests.** Open a test class and run `:Sf test current`, or put the cursor in
 one `@IsTest` method and run `:Sf test method`. The run streams in a terminal
-split; press ENTER when it finishes. Failures (including compile
+split; press `Enter` or `q` when it finishes. Failures (including compile
 failures) are loaded into quickfix with file, line, column and message — `:cn` /
 `:cp` to jump between them. Results are also saved as JSON under
 `test_results_dir`, so `:Sf test load` can reload the latest run later.

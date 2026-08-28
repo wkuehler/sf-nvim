@@ -27,8 +27,13 @@ end
 
 -- -------------------------------------------------------------
 -- Run a command in a terminal split at the bottom of the screen.
--- The split stays open until the user presses ENTER.
+-- The split opens in Normal mode with the cursor on the last line, so
+-- output is followed as it streams and can be scrolled with ordinary
+-- motions at any time. When the command finishes it waits at a prompt;
+-- <CR> or q (buffer-local, Normal mode) closes the split.
 -- -------------------------------------------------------------
+M.PROMPT = "[sf-nvim] Done. Press ENTER or q to close."
+
 ---@class SfTermOpts
 ---@field on_exit? fun(code: integer)  called (scheduled) after the terminal closes
 ---@field no_wait? boolean             skip the "Press ENTER" pause
@@ -46,7 +51,7 @@ function M.term(cmd, opts)
 		cmd = M.shell_join(cmd)
 	end
 	if not opts.no_wait then
-		cmd = cmd .. "; __sf_rc=$?; echo ''; read -p 'Press ENTER to close...'; exit $__sf_rc"
+		cmd = cmd .. "; __sf_rc=$?; echo ''; read -p " .. vim.fn.shellescape(M.PROMPT .. " ") .. "; exit $__sf_rc"
 	end
 
 	local position = opts.position or "botright"
@@ -69,7 +74,23 @@ function M.term(cmd, opts)
 		end,
 	})
 
-	vim.cmd("startinsert")
+	-- Stay in Normal mode; with the cursor on the last line Neovim keeps the
+	-- view scrolled to new output, and the user can scroll freely at any time.
+	vim.cmd("normal! G")
+
+	local function close()
+		local chan = vim.bo[bufnr].channel
+		if chan and chan > 0 then
+			-- Answers the `read` prompt; harmless if the command is still running.
+			pcall(vim.api.nvim_chan_send, chan, "\r")
+		end
+	end
+	local map_opts = { buffer = bufnr, nowait = true, silent = true }
+	vim.keymap.set("n", "<CR>", close, vim.tbl_extend("force", map_opts, { desc = "sf-nvim: close" }))
+	vim.keymap.set("n", "q", close, vim.tbl_extend("force", map_opts, { desc = "sf-nvim: close" }))
+	-- If the user does enter Terminal mode (i), let <Esc> bring them back out.
+	vim.keymap.set("t", "<Esc>", "<C-\\><C-n>", vim.tbl_extend("force", map_opts, { desc = "sf-nvim: normal mode" }))
+
 	return bufnr
 end
 

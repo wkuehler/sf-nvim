@@ -7,6 +7,16 @@ tag.
 
 ## Unreleased
 
+### 2026-08-28 — Scrollable terminal split
+- The terminal split now opens in Normal mode with the cursor on the last
+  line, so output is followed as it streams and can be scrolled with ordinary
+  motions at any time (previously it started in Terminal mode and needed
+  `<C-\><C-n>` to scroll).
+- Buffer-local `<CR>` and `q` (Normal mode) close the split once the command
+  has finished; `<Esc>` in Terminal mode returns to Normal mode.
+- Prompt is now `[sf-nvim] Done. Press ENTER or q to close.`
+- Documented in `:help sf-nvim-terminal` and the README.
+
 ## v0.3.0 — 2026-08-28
 
 The edit/deploy loop: current-file deploy and retrieve, deploy errors in

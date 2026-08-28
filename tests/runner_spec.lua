@@ -70,3 +70,34 @@ describe("runner.json_async", function()
 		assert.equals("failed to parse JSON (exit 1): boom", err)
 	end)
 end)
+
+describe("runner.term", function()
+	it("opens in Normal mode at the last line, and <CR> / q close it once finished", function()
+		local code
+		local bufnr = runner.term({ "sh", "-c", "echo hello; exit 4" }, {
+			on_exit = function(c)
+				code = c
+			end,
+		})
+		assert.equals(bufnr, vim.api.nvim_get_current_buf())
+		assert.equals("terminal", vim.bo[bufnr].buftype)
+		assert.equals("n", vim.fn.mode())
+		assert.equals(vim.api.nvim_buf_line_count(bufnr), vim.api.nvim_win_get_cursor(0)[1])
+		assert.truthy(vim.fn.maparg("<CR>", "n", false, true).buffer == 1)
+		assert.truthy(vim.fn.maparg("q", "n", false, true).buffer == 1)
+		assert.truthy(vim.fn.maparg("<Esc>", "t", false, true).buffer == 1)
+
+		-- wait for the command to reach the prompt
+		assert.is_true(vim.wait(5000, function()
+			local text = table.concat(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), "\n")
+			return text:find(runner.PROMPT, 1, true) ~= nil
+		end, 20))
+
+		vim.api.nvim_feedkeys("q", "x", false)
+		assert.is_true(vim.wait(5000, function()
+			return code ~= nil
+		end, 20))
+		assert.equals(4, code)
+		assert.is_false(vim.api.nvim_buf_is_valid(bufnr))
+	end)
+end)

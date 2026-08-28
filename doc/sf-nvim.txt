@@ -10,8 +10,9 @@ CONTENTS                                                    *sf-nvim-contents*
     5. Commands ................................ |sf-nvim-commands|
     6. Keymaps ................................. |sf-nvim-keymaps|
     7. Test results and quickfix ............... |sf-nvim-quickfix|
-    8. Lua API ................................. |sf-nvim-api|
-    9. Health check ............................ |sf-nvim-health|
+    8. The terminal split ...................... |sf-nvim-terminal|
+    9. Lua API ................................. |sf-nvim-api|
+   10. Health check ............................ |sf-nvim-health|
 
 ==============================================================================
 1. INTRODUCTION                                         *sf-nvim-introduction*
@@ -21,8 +22,9 @@ inside Neovim: Apex tests with failures in the quickfix list, deploy/retrieve,
 org and scratch org management, and anonymous Apex execution.
 
 Long-running commands (tests, deploys, scratch org creation) run in a terminal
-split at the bottom of the screen. The split stays open until you press
-<Enter>, so the full CLI output is always visible. Quick lookups — the org
+split at the bottom of the screen (see |sf-nvim-terminal|). The split stays
+open until you press <Enter> or `q`, so the full CLI output is always
+visible. Quick lookups — the org
 picker behind |:Sf-config-org|, `sf config set`, |:Sf-org-open| — run in the
 background with |vim.system()| and report through |vim.notify()|. User
 feedback goes through |vim.notify()|, |vim.ui.select()| and |vim.ui.input()|,
@@ -254,7 +256,32 @@ field) point at line 1 of their metadata file. The quickfix window opens
 automatically when |sf-nvim-config.auto_open_quickfix| is set.
 
 ==============================================================================
-8. LUA API                                                       *sf-nvim-api*
+8. THE TERMINAL SPLIT                                       *sf-nvim-terminal*
+
+Commands run through `runner.term` open a |:terminal| in a bottom split. The
+split is left in Normal mode with the cursor on the last line, which makes
+Neovim follow new output as it arrives (see |terminal-input|) while every
+ordinary motion still works — <C-u>, <C-b>, `k`, `gg`, `?pattern` — so you
+can scroll back through long output at any time. Moving the cursor off the
+last line stops the following; `G` resumes it.
+
+When the command finishes the split shows: >
+
+    [sf-nvim] Done. Press ENTER or q to close.
+<
+Buffer-local mappings in that split:
+
+    <CR>  (Normal)      close the split (answers the prompt)
+    q     (Normal)      same
+    <Esc> (Terminal)    back to Normal mode, if you entered Terminal mode
+                        with `i` to type at the command
+
+Pressing <CR> or `q` while the command is still running does nothing
+harmful — the keystroke goes to the command's stdin — but the split stays
+open until the command exits. The buffer is wiped when the split closes.
+
+==============================================================================
+9. LUA API                                                       *sf-nvim-api*
 
                                                              *sf-nvim.setup()*
 require("sf-nvim").setup({opts})
@@ -302,7 +329,7 @@ Module functions (all take no arguments unless noted):
         .apply({key}, {org})    `sf config set {key} {org}`, async
 
     require("sf-nvim.utils.runner")
-        .term({argv|cmd}, {opts})           terminal split, opts.on_exit(code)
+        .term({argv|cmd}, {opts})           terminal split, opts.on_exit(code); see |sf-nvim-terminal|
         .run({argv}, {opts})                async vim.system(); opts.on_exit(code, stdout, stderr)
         .json_async({argv}, {cb}, {opts})   async + JSON decode; cb(data, err)
 
@@ -313,7 +340,7 @@ Module functions (all take no arguments unless noted):
         .parse_test_results({json}, {find}) -> items, missing
 
 ==============================================================================
-9. HEALTH CHECK                                               *sf-nvim-health*
+10. HEALTH CHECK                                              *sf-nvim-health*
 
 `:checkhealth sf-nvim` reports:
 

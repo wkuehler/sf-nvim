@@ -51,9 +51,10 @@ notification, never a shell error. Call `guard.project()` in actions that need a
 
 All process execution goes through `utils/runner.lua`, which has three styles:
 
-1. **`runner.term(cmd, {on_exit})`** — interactive terminal split at the bottom, ends
-   with a `Press ENTER to close` pause, deletes its buffer on `TermClose`, then calls
-   `on_exit(code)`. Used by `apex.lua`, `org.lua` (except `open`), `project.lua`. Pass an argv list and
+1. **`runner.term(cmd, {on_exit})`** — terminal split at the bottom, opened in Normal
+   mode at the last line (so it follows output and is scrollable); ends with a
+   `read` prompt answered by buffer-local `<CR>`/`q`, deletes its buffer on `TermClose`,
+   then calls `on_exit(code)`. Used by `apex.lua`, `org.lua` (except `open`), `project.lua`. Pass an argv list and
    it is shell-escaped for you; pass a string only when you need shell syntax (the test
    runner does, to redirect `--json` output). Test runs invoke `sf apex run test`
    **twice** — once `--json` to a timestamped file under `<cwd>/<test_results_dir>/`,
