@@ -1,5 +1,13 @@
 describe("sf-nvim.setup", function()
 	local sf = require("sf-nvim")
+	local org = require("sf-nvim.org")
+	local orig_refresh = org.refresh_target
+	before_each(function()
+		org.refresh_target = function() end
+	end)
+	after_each(function()
+		org.refresh_target = orig_refresh
+	end)
 
 	it("merges user options over defaults and pushes them to apex", function()
 		sf.setup({ test_results_dir = "out", test_wait_time = 3, auto_open_quickfix = false })

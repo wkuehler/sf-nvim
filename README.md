@@ -52,6 +52,7 @@ require("sf-nvim").setup({
     enable_default_keybinds = false,     -- install the keymaps listed below
     leader_prefix = "<leader>s",         -- prefix for those keymaps
     deploy_on_save = false,              -- deploy a source file to the target org on :w
+    tail_notify = true,                  -- notify on each debug log captured by :Sf log tail
 })
 ```
 
@@ -74,7 +75,8 @@ Everything is available as `:Sf <group> <action>` with tab completion:
 | `:'<,'>Sf apex debugselection` | Same, for the selected lines |
 | `:Sf log list` | Pick a stored debug log and open it |
 | `:Sf log latest` | Open the most recent debug log |
-| `:Sf log tail` | Stream debug logs live; creates a trace flag for your user if needed |
+| `:Sf log tail` | Toggle a background tail of debug logs; creates a trace flag for your user if needed |
+| `:Sf log show` | Open the captured logs (`sf://log/tail`) in a split |
 | `:Sf soql buffer` | Run the buffer as a SOQL query; results as a table |
 | `:'<,'>Sf soql selection` | Run the selected lines as a SOQL query |
 | `:Sf soql prompt` | Prompt for a query and run it |
@@ -108,6 +110,7 @@ With `enable_default_keybinds = true` and the default `leader_prefix = "<leader>
 | `<leader>sll` | `:Sf log list` |
 | `<leader>slr` | `:Sf log latest` |
 | `<leader>slt` | `:Sf log tail` |
+| `<leader>sls` | `:Sf log show` |
 | `<leader>sqb` | `:Sf soql buffer` |
 | `<leader>sqq` | `:Sf soql prompt` |
 | `<leader>sq`  | `:Sf soql selection` (visual) |
@@ -155,8 +158,27 @@ debug log with `apexlog` highlighting.
 (time, operation, status, size, duration, user) and opens the chosen one;
 `:Sf log latest` skips the picker. Logs open in read-only `sf://log/<id>`
 buffers — `q` closes them. Stored logs only exist while a trace flag is active
-for your user; `:Sf log tail` creates one (and streams logs live in the
-terminal split), after which `list`/`latest` start returning logs.
+for your user; `:Sf log tail` creates one, after which `list`/`latest` start
+returning logs.
+
+**Tailing.** `:Sf log tail` toggles `sf apex tail log` running in the
+background — no split is opened. Each captured log bumps a counter (and, with
+`tail_notify`, a short notification); `:Sf log show` opens the accumulated
+output in a split whenever you want to look, and `q` closes it while the tail
+keeps running. The buffer keeps the last 5000 lines. If the CLI exits on its
+own (expired token, org switch) you get an error notification rather than a
+silent stop; the process is killed when Neovim exits.
+
+**Statusline.** `require("sf-nvim").status()` returns the target org and, while
+tailing, `⏺ N` (logs captured) — e.g. `dev ⏺ 3`. It's refreshed on `setup()`
+and after `:Sf config org`. lualine example:
+
+```lua
+sections = { lualine_x = { function() return require("sf-nvim").status() end } },
+```
+
+The `User SfTargetChanged` and `User SfTailChanged` autocommand events fire
+when either part changes, if your statusline needs a redraw trigger.
 
 **SOQL.** Write a query in a `.soql` buffer (or anywhere) and run
 `:Sf soql buffer`, or select the lines and `:'<,'>Sf soql selection`, or

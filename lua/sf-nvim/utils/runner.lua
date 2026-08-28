@@ -124,6 +124,71 @@ function M.run(argv, opts)
 end
 
 -- -------------------------------------------------------------
+-- Run a long-lived command and deliver stdout line by line.
+-- Partial chunks are buffered until a newline arrives. Callbacks run
+-- on the main loop. Call :kill() on the returned object to stop it.
+-- -------------------------------------------------------------
+---@class SfStreamOpts
+---@field on_line fun(line: string)
+---@field on_exit? fun(code: integer, stderr: string)
+---@field cwd? string
+
+---@param argv string[]
+---@param opts SfStreamOpts
+---@return vim.SystemObj|nil
+function M.stream(argv, opts)
+	if not guard.executable(argv[1]) then
+		return nil
+	end
+	local pending = ""
+	local stderr_acc = {}
+	local function flush(chunk, final)
+		pending = pending .. (chunk or "")
+		local lines = {}
+		while true do
+			local nl = pending:find("\n", 1, true)
+			if not nl then
+				break
+			end
+			table.insert(lines, (pending:sub(1, nl - 1):gsub("\r$", "")))
+			pending = pending:sub(nl + 1)
+		end
+		if final and pending ~= "" then
+			table.insert(lines, pending)
+			pending = ""
+		end
+		if #lines > 0 then
+			vim.schedule(function()
+				for _, l in ipairs(lines) do
+					opts.on_line(l)
+				end
+			end)
+		end
+	end
+	return vim.system(argv, {
+		text = true,
+		cwd = opts.cwd,
+		stdout = function(_, data)
+			if data then
+				flush(data, false)
+			end
+		end,
+		stderr = function(_, data)
+			if data then
+				table.insert(stderr_acc, data)
+			end
+		end,
+	}, function(res)
+		flush(nil, true)
+		if opts.on_exit then
+			vim.schedule(function()
+				opts.on_exit(res.code, table.concat(stderr_acc))
+			end)
+		end
+	end)
+end
+
+-- -------------------------------------------------------------
 -- Run a command asynchronously and JSON-decode its stdout.
 -- `sf --json` writes the payload to stdout even on failure, so the
 -- decoded data is passed through whenever it parses; `err` is set

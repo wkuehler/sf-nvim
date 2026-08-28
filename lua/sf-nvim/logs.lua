@@ -94,12 +94,193 @@ function M.latest()
 	})
 end
 
----Stream logs live in a terminal split. `sf apex tail log` creates a
----trace flag for the running user if none is active, which is also what
----makes `list`/`latest` start returning logs.
-function M.tail()
-	runner.term({ "sf", "apex", "tail", "log", "--color" })
+-- -------------------------------------------------------------
+-- Background tail: `sf apex tail log` runs under vim.system, its output
+-- is appended to the hidden `sf://log/tail` buffer, and each new log is
+-- counted (the CLI prints a `NN.N APEX_CODE,...` header per log).
+-- -------------------------------------------------------------
+M.TAIL_BUFFER = "sf://log/tail"
+M.TAIL_MAX_LINES = 5000
+
+---@class SfTailState
+---@field proc vim.SystemObj
+---@field count integer      logs captured since start
+---@field stopping boolean   set when the user asked to stop
+
+---@type SfTailState|nil
+M.tail_state = nil
+
+---@return boolean
+function M.tailing()
+	return M.tail_state ~= nil
 end
+
+---@return integer
+function M.tail_count()
+	return M.tail_state and M.tail_state.count or 0
+end
+
+local function tail_buffer()
+	local bufnr = vim.fn.bufnr(M.TAIL_BUFFER)
+	if bufnr ~= -1 then
+		return bufnr
+	end
+	bufnr = vim.api.nvim_create_buf(false, true)
+	vim.api.nvim_buf_set_name(bufnr, M.TAIL_BUFFER)
+	vim.bo[bufnr].buftype = "nofile"
+	vim.bo[bufnr].bufhidden = "hide"
+	vim.bo[bufnr].swapfile = false
+	vim.bo[bufnr].filetype = "apexlog"
+	vim.bo[bufnr].modifiable = false
+	vim.keymap.set(
+		"n",
+		"q",
+		"<Cmd>close<CR>",
+		{ buffer = bufnr, nowait = true, silent = true, desc = "sf-nvim: close" }
+	)
+	return bufnr
+end
+
+local function is_log_header(line)
+	return line:match("^%d+%.%d+ APEX_CODE") ~= nil
+end
+
+---Append lines to the tail buffer, trim to TAIL_MAX_LINES, follow in any
+---window whose cursor was on the last line.
+---@param lines string[]
+local function append(lines)
+	local bufnr = tail_buffer()
+	local last = vim.api.nvim_buf_line_count(bufnr)
+	local empty = last == 1 and vim.api.nvim_buf_get_lines(bufnr, 0, 1, false)[1] == ""
+	local following = {}
+	for _, win in ipairs(vim.fn.win_findbuf(bufnr)) do
+		if vim.api.nvim_win_get_cursor(win)[1] == last then
+			table.insert(following, win)
+		end
+	end
+	vim.bo[bufnr].modifiable = true
+	if empty then
+		vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
+	else
+		vim.api.nvim_buf_set_lines(bufnr, -1, -1, false, lines)
+	end
+	local total = vim.api.nvim_buf_line_count(bufnr)
+	if total > M.TAIL_MAX_LINES then
+		vim.api.nvim_buf_set_lines(bufnr, 0, total - M.TAIL_MAX_LINES, false, {})
+		total = M.TAIL_MAX_LINES
+	end
+	vim.bo[bufnr].modifiable = false
+	vim.bo[bufnr].modified = false
+	for _, win in ipairs(following) do
+		pcall(vim.api.nvim_win_set_cursor, win, { total, 0 })
+	end
+end
+
+local function tail_notify()
+	local ok, sf = pcall(require, "sf-nvim")
+	return not ok or sf.config.tail_notify ~= false
+end
+
+---Start tailing (no-op if already running).
+function M.tail_start()
+	if M.tail_state then
+		return
+	end
+	local state = { count = 0, stopping = false }
+	local proc = runner.stream({ "sf", "apex", "tail", "log" }, {
+		on_line = function(line)
+			if M.tail_state ~= state then
+				return
+			end
+			append({ line })
+			if is_log_header(line) then
+				state.count = state.count + 1
+				if tail_notify() then
+					vim.notify(string.format("Debug log captured (#%d)", state.count), vim.log.levels.INFO)
+				end
+				vim.api.nvim_exec_autocmds("User", { pattern = "SfTailChanged", modeline = false })
+			end
+		end,
+		on_exit = function(code, stderr)
+			if M.tail_state ~= state then
+				return
+			end
+			M.tail_state = nil
+			vim.api.nvim_exec_autocmds("User", { pattern = "SfTailChanged", modeline = false })
+			if not state.stopping then
+				local detail = vim.trim(stderr)
+				vim.notify(
+					"Debug log tail stopped (exit " .. code .. ")" .. (detail ~= "" and ": " .. detail or ""),
+					vim.log.levels.ERROR
+				)
+			end
+		end,
+	})
+	if not proc then
+		return
+	end
+	state.proc = proc
+	M.tail_state = state
+	local org = require("sf-nvim.org").target
+	vim.notify(
+		"Tailing debug logs" .. (org and (" for " .. org) or "") .. " — :Sf log show to view",
+		vim.log.levels.INFO
+	)
+	vim.api.nvim_exec_autocmds("User", { pattern = "SfTailChanged", modeline = false })
+end
+
+---Stop tailing (no-op if not running).
+function M.tail_stop()
+	local state = M.tail_state
+	if not state then
+		return
+	end
+	state.stopping = true
+	M.tail_state = nil
+	pcall(function()
+		state.proc:kill(15)
+	end)
+	vim.notify(string.format("Stopped tailing debug logs (%d captured)", state.count), vim.log.levels.INFO)
+	vim.api.nvim_exec_autocmds("User", { pattern = "SfTailChanged", modeline = false })
+end
+
+---Toggle the background tail. `sf apex tail log` creates a trace flag for
+---the running user if none is active, which is also what makes
+---`list`/`latest` start returning logs.
+function M.tail()
+	if M.tail_state then
+		M.tail_stop()
+	else
+		M.tail_start()
+	end
+end
+
+---Open the tail buffer in a split (cursor at the end so it follows).
+function M.show()
+	local bufnr = tail_buffer()
+	local win = vim.fn.bufwinid(bufnr)
+	if win == -1 then
+		vim.cmd("botright split")
+		vim.api.nvim_win_set_buf(0, bufnr)
+	else
+		vim.api.nvim_set_current_win(win)
+	end
+	vim.cmd("normal! G")
+	if not M.tail_state then
+		vim.notify("Not tailing — :Sf log tail to start", vim.log.levels.WARN)
+	end
+end
+
+vim.api.nvim_create_autocmd("VimLeavePre", {
+	group = vim.api.nvim_create_augroup("SfLogTail", { clear = true }),
+	callback = function()
+		if M.tail_state then
+			pcall(function()
+				M.tail_state.proc:kill(15)
+			end)
+		end
+	end,
+})
 
 -- -------------------------------------------------------------
 -- Anonymous Apex with its log

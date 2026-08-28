@@ -7,6 +7,34 @@ local runner = require("sf-nvim.utils.runner")
 local guard = require("sf-nvim.utils.guard")
 
 -- -------------------------------------------------------------
+-- Target org, cached for the statusline
+-- -------------------------------------------------------------
+---@type string|nil  alias or username of target-org, nil if unknown/unset
+M.target = nil
+
+---@param value string|nil
+function M.set_target(value)
+	M.target = value
+	vim.api.nvim_exec_autocmds("User", { pattern = "SfTargetChanged", modeline = false })
+end
+
+---Refresh `M.target` from `sf config get target-org` in the background.
+---@param cb? fun(target: string|nil)
+function M.refresh_target(cb)
+	runner.json_async({ "sf", "config", "get", "target-org", "--json" }, function(data)
+		local value
+		local r = data and data.result
+		if type(r) == "table" and type(r[1]) == "table" and type(r[1].value) == "string" then
+			value = r[1].value
+		end
+		M.set_target(value)
+		if cb then
+			cb(value)
+		end
+	end)
+end
+
+-- -------------------------------------------------------------
 -- Open the default org in browser
 -- -------------------------------------------------------------
 ---`sf org open` in the background; notifies with the URL or the error.

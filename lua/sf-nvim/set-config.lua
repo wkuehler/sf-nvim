@@ -87,6 +87,9 @@ function M.apply(config_key, org_identifier)
 		on_exit = function(code, stdout, stderr)
 			if code == 0 then
 				vim.notify(string.format("Set %s to %s", config_key, org_identifier), vim.log.levels.INFO)
+				if config_key == "target-org" then
+					require("sf-nvim.org").set_target(org_identifier)
+				end
 			else
 				local detail = vim.trim(stderr ~= "" and stderr or stdout)
 				vim.notify(string.format("Failed to set %s: %s", config_key, detail), vim.log.levels.ERROR)

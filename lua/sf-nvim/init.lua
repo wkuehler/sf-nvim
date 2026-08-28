@@ -18,6 +18,7 @@ M.soql = require("sf-nvim.soql")
 ---@field enable_default_keybinds boolean
 ---@field leader_prefix string          prefix for default keybinds
 ---@field deploy_on_save boolean        deploy a source file to the target org on :write
+---@field tail_notify boolean           notify on each debug log captured by :Sf log tail
 
 ---@type SfConfig
 local default_config = {
@@ -27,6 +28,7 @@ local default_config = {
 	enable_default_keybinds = false,
 	leader_prefix = "<leader>s",
 	deploy_on_save = false,
+	tail_notify = true,
 }
 
 ---@type SfConfig
@@ -129,9 +131,16 @@ M.actions = {
 		},
 		tail = {
 			key = "lt",
-			desc = "Tail debug logs live (creates a trace flag)",
+			desc = "Toggle background debug log tail (creates a trace flag)",
 			fn = function()
 				M.logs.tail()
+			end,
+		},
+		show = {
+			key = "ls",
+			desc = "Show captured debug logs",
+			fn = function()
+				M.logs.show()
 			end,
 		},
 	},
@@ -244,6 +253,24 @@ M.actions = {
 	},
 }
 
+-- -------------------------------------------------------------
+-- Statusline provider
+-- -------------------------------------------------------------
+---Short status for a statusline: target org, plus "⏺ N" while tailing logs.
+---Empty string when nothing is known. Refreshes on User SfTargetChanged /
+---SfTailChanged, so a statusline can redraw on those events.
+---@return string
+function M.status()
+	local parts = {}
+	if M.org.target then
+		table.insert(parts, M.org.target)
+	end
+	if M.logs.tailing() then
+		table.insert(parts, "⏺ " .. M.logs.tail_count())
+	end
+	return table.concat(parts, " ")
+end
+
 local function sorted_keys(t)
 	local keys = vim.tbl_keys(t)
 	table.sort(keys)
@@ -344,6 +371,9 @@ function M.setup(opts)
 		setup_keybinds()
 	end
 	M.project.set_deploy_on_save(M.config.deploy_on_save)
+	if vim.fn.executable("sf") == 1 then
+		M.org.refresh_target()
+	end
 end
 
 return M
