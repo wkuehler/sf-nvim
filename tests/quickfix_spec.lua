@@ -45,7 +45,10 @@ describe("quickfix.parse_test_results", function()
 	it("reports failures whose class file cannot be found as skipped", function()
 		local data = load_fixture("apex_test_failures.json")
 		local _, skipped = quickfix.parse_test_results(data, fake_find)
-		assert.same({ class = "MissingClassTest", method = "testSomething", message = "System.AssertException: nope" }, skipped[1])
+		assert.same(
+			{ class = "MissingClassTest", method = "testSomething", message = "System.AssertException: nope" },
+			skipped[1]
+		)
 	end)
 
 	it("returns nothing for an all-pass run", function()
@@ -66,7 +69,12 @@ describe("quickfix.parse_test_results", function()
 		local data = {
 			result = {
 				tests = {
-					{ Outcome = "Fail", MethodName = "m", StackTrace = "", ApexClass = { Name = "AccountServiceTest" } },
+					{
+						Outcome = "Fail",
+						MethodName = "m",
+						StackTrace = "",
+						ApexClass = { Name = "AccountServiceTest" },
+					},
 				},
 			},
 		}

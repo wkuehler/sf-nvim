@@ -90,10 +90,16 @@ function M.create_scratch_org()
 				end
 
 				runner.term({
-					"sf", "org", "create", "scratch",
-					"--definition-file", config_choice.path,
-					"--duration-days", duration,
-					"--alias", alias,
+					"sf",
+					"org",
+					"create",
+					"scratch",
+					"--definition-file",
+					config_choice.path,
+					"--duration-days",
+					duration,
+					"--alias",
+					alias,
 				})
 			end)
 		end)

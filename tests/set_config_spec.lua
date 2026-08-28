@@ -14,9 +14,16 @@ describe("set-config.build_org_items", function()
 		local items = setconfig.build_org_items(load_fixture("org_list.json"))
 		assert.equals(3, #items)
 
-		assert.same({ label = "DevHub (devhub@example.com) [default hub]", alias = "DevHub", username = "devhub@example.com" }, items[1])
+		assert.same(
+			{ label = "DevHub (devhub@example.com) [default hub]", alias = "DevHub", username = "devhub@example.com" },
+			items[1]
+		)
 		assert.same({ label = "noalias@example.com", alias = nil, username = "noalias@example.com" }, items[2])
-		assert.same({ label = "issue123 (test-abc@example.com) [default org]", alias = "issue123", username = "test-abc@example.com" }, items[3])
+		assert.same({
+			label = "issue123 (test-abc@example.com) [default org]",
+			alias = "issue123",
+			username = "test-abc@example.com",
+		}, items[3])
 	end)
 
 	it("returns an empty list for empty or malformed payloads", function()

@@ -103,7 +103,12 @@ local function notify_summary(data, qf_items, skipped_tests)
 		for _, s in ipairs(skipped_tests) do
 			table.insert(names, s.class .. "." .. s.method)
 		end
-		msg = msg .. string.format("\n%d failure(s) not in quickfix (class file not found): %s", #skipped_tests, table.concat(names, ", "))
+		msg = msg
+			.. string.format(
+				"\n%d failure(s) not in quickfix (class file not found): %s",
+				#skipped_tests,
+				table.concat(names, ", ")
+			)
 	end
 	vim.notify(msg, level)
 end

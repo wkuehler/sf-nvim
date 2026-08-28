@@ -39,9 +39,27 @@ M.config = vim.deepcopy(default_config)
 ---@type table<string, table<string, SfAction>>
 M.actions = {
 	test = {
-		current = { key = "tc", desc = "Run tests for current class", fn = function() M.apex.run_test() end },
-		all = { key = "ta", desc = "Run all Apex tests", fn = function() M.apex.run_all_tests() end },
-		clear = { key = "tx", desc = "Clear test results directory", fn = function() M.apex.clear_test_results() end },
+		current = {
+			key = "tc",
+			desc = "Run tests for current class",
+			fn = function()
+				M.apex.run_test()
+			end,
+		},
+		all = {
+			key = "ta",
+			desc = "Run all Apex tests",
+			fn = function()
+				M.apex.run_all_tests()
+			end,
+		},
+		clear = {
+			key = "tx",
+			desc = "Clear test results directory",
+			fn = function()
+				M.apex.clear_test_results()
+			end,
+		},
 		load = {
 			key = "tl",
 			desc = "Load latest test results into quickfix",
@@ -51,22 +69,82 @@ M.actions = {
 		},
 	},
 	apex = {
-		execute = { key = "e", desc = "Execute current file as anonymous Apex", fn = function() M.apex.execute_script() end },
+		execute = {
+			key = "e",
+			desc = "Execute current file as anonymous Apex",
+			fn = function()
+				M.apex.execute_script()
+			end,
+		},
 	},
 	org = {
-		open = { key = "oo", desc = "Open org in browser", fn = function() M.org.open() end },
-		list = { key = "ol", desc = "List orgs", fn = function() M.org.list() end },
-		info = { key = "oi", desc = "Display org info", fn = function() M.org.display() end },
-		create = { key = "oc", desc = "Create scratch org", fn = function() M.org.create_scratch_org() end },
+		open = {
+			key = "oo",
+			desc = "Open org in browser",
+			fn = function()
+				M.org.open()
+			end,
+		},
+		list = {
+			key = "ol",
+			desc = "List orgs",
+			fn = function()
+				M.org.list()
+			end,
+		},
+		info = {
+			key = "oi",
+			desc = "Display org info",
+			fn = function()
+				M.org.display()
+			end,
+		},
+		create = {
+			key = "oc",
+			desc = "Create scratch org",
+			fn = function()
+				M.org.create_scratch_org()
+			end,
+		},
 	},
 	config = {
-		org = { key = "co", desc = "Set target-org", fn = function() M.setconfig.set_target_org() end },
-		hub = { key = "ch", desc = "Set target-dev-hub", fn = function() M.setconfig.set_target_dev_hub() end },
+		org = {
+			key = "co",
+			desc = "Set target-org",
+			fn = function()
+				M.setconfig.set_target_org()
+			end,
+		},
+		hub = {
+			key = "ch",
+			desc = "Set target-dev-hub",
+			fn = function()
+				M.setconfig.set_target_dev_hub()
+			end,
+		},
 	},
 	project = {
-		deploy = { key = "pd", desc = "Deploy project", fn = function() M.project.deploy() end },
-		retrieve = { key = "pr", desc = "Retrieve from org", fn = function() M.project.retrieve() end },
-		validate = { key = "pv", desc = "Validate deployment (dry run)", fn = function() M.project.validate() end },
+		deploy = {
+			key = "pd",
+			desc = "Deploy project",
+			fn = function()
+				M.project.deploy()
+			end,
+		},
+		retrieve = {
+			key = "pr",
+			desc = "Retrieve from org",
+			fn = function()
+				M.project.retrieve()
+			end,
+		},
+		validate = {
+			key = "pv",
+			desc = "Validate deployment (dry run)",
+			fn = function()
+				M.project.validate()
+			end,
+		},
 	},
 }
 
@@ -83,13 +161,21 @@ local function sf_command(opts)
 	local group, action = opts.fargs[1], opts.fargs[2]
 	local g = group and M.actions[group]
 	if not g then
-		vim.notify("Sf: unknown group '" .. tostring(group) .. "'. Groups: " .. table.concat(sorted_keys(M.actions), ", "), vim.log.levels.ERROR)
+		vim.notify(
+			"Sf: unknown group '" .. tostring(group) .. "'. Groups: " .. table.concat(sorted_keys(M.actions), ", "),
+			vim.log.levels.ERROR
+		)
 		return
 	end
 	local a = action and g[action]
 	if not a then
 		vim.notify(
-			string.format("Sf %s: unknown action '%s'. Actions: %s", group, tostring(action), table.concat(sorted_keys(g), ", ")),
+			string.format(
+				"Sf %s: unknown action '%s'. Actions: %s",
+				group,
+				tostring(action),
+				table.concat(sorted_keys(g), ", ")
+			),
 			vim.log.levels.ERROR
 		)
 		return
