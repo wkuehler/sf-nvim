@@ -5,7 +5,9 @@ Progress log for sf-nvim. One entry per milestone (a roadmap item from
 it. Versions follow semver; lazy.nvim users can pin with `version = "*"` or a
 tag.
 
-## Unreleased
+## v0.6.0 — 2026-08-28
+
+Org lifecycle (`login`/`delete`/`pick`/`limits`), metadata generators, deploy/retrieve previews, packer/vim-plug and LSP docs.
 
 ### 2026-08-28 — Org lifecycle, generators, previews, install/LSP docs
 - `:Sf org login` (`soa`): `sf org login web` with alias prompt and
