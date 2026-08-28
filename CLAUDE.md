@@ -79,3 +79,5 @@ and `set-config.build_org_items` are the two places coupled to the CLI's JSON sh
 - Stated Neovim floor is 0.7 (README). `vim.system()` (0.10+) is not used yet; if you
   raise the floor, update the README requirement too.
 - `open-items.md` is the roadmap; check items off there as they land.
+- After each milestone (a roadmap item landing), add an entry to `CHANGELOG.md`
+  (date, commit, what changed, any bugs found along the way) in the same commit.
