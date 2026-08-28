@@ -70,6 +70,60 @@ function M.run_test()
 end
 
 -- -------------------------------------------------------------
+-- Find the name of the test method enclosing a line
+-- -------------------------------------------------------------
+---Walk upward from `line` (1-based) looking for a method declaration.
+---@param lines string[]
+---@param line integer
+---@return string|nil name
+function M.find_test_method(lines, line)
+	for i = math.min(line, #lines), 1, -1 do
+		local l = lines[i]
+		-- `static void name(` / `testMethod void name(` / `void name(`
+		local name = l:match("^%s*[%w_@%s]-void%s+([%w_]+)%s*%(")
+		if name then
+			-- Only accept it if it is a test: testMethod keyword, or @IsTest among the
+			-- annotation lines directly above (stop at the first non-annotation line so
+			-- a class-level @IsTest is never picked up).
+			if l:lower():find("testmethod", 1, true) then
+				return name
+			end
+			local is_test = l:lower():find("@istest", 1, true) ~= nil
+			for j = i - 1, 1, -1 do
+				local a = lines[j]:lower()
+				if not a:match("^%s*@") then
+					break
+				end
+				if a:find("@testsetup", 1, true) then
+					return nil
+				end
+				if a:find("@istest", 1, true) then
+					is_test = true
+				end
+			end
+			return is_test and name or nil
+		end
+	end
+	return nil
+end
+
+---Run the single test method under the cursor (`--tests Class.method`).
+function M.run_test_method()
+	if vim.fn.expand("%:e") ~= "cls" then
+		vim.notify("Current file is not an Apex class (.cls)", vim.log.levels.WARN)
+		return
+	end
+	local class = vim.fn.expand("%:t:r")
+	local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+	local method = M.find_test_method(lines, vim.api.nvim_win_get_cursor(0)[1])
+	if not method then
+		vim.notify("No @IsTest method found at or above the cursor", vim.log.levels.WARN)
+		return
+	end
+	run_tests(class .. "." .. method)
+end
+
+-- -------------------------------------------------------------
 -- Run all Apex tests
 -- -------------------------------------------------------------
 ---Run every test in the org; failures are loaded into quickfix.
@@ -88,6 +142,31 @@ function M.execute_script()
 		return
 	end
 	runner.term({ "sf", "apex", "run", "-f", target })
+end
+
+-- -------------------------------------------------------------
+-- Execute a line range as anonymous Apex
+-- -------------------------------------------------------------
+---@param range? {integer, integer}  1-based inclusive; defaults to the last visual selection
+function M.execute_selection(range)
+	local first, last
+	if range then
+		first, last = range[1], range[2]
+	else
+		first, last = vim.fn.line("'<"), vim.fn.line("'>")
+	end
+	if first == 0 or last == 0 or last < first then
+		vim.notify("No selection to execute", vim.log.levels.WARN)
+		return
+	end
+	local lines = vim.api.nvim_buf_get_lines(0, first - 1, last, false)
+	local tmp = vim.fn.tempname() .. ".apex"
+	vim.fn.writefile(lines, tmp)
+	runner.term({ "sf", "apex", "run", "-f", tmp }, {
+		on_exit = function()
+			vim.fn.delete(tmp)
+		end,
+	})
 end
 
 -- -------------------------------------------------------------

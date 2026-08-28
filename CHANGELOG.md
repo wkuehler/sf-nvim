@@ -7,6 +7,38 @@ tag.
 
 ## Unreleased
 
+## v0.3.0 — 2026-08-28
+
+The edit/deploy loop: current-file deploy and retrieve, deploy errors in
+quickfix, deploy-on-save, single test method, anonymous Apex from a selection.
+
+### 2026-08-28 — Edit/deploy loop
+- `:Sf project file` / `:Sf project fetch` (`<leader>spf` / `spF`): deploy or
+  retrieve the current file with `--source-dir`, async. Files inside an
+  `lwc/<name>/` or `aura/<name>/` bundle resolve to the bundle; a `-meta.xml`
+  resolves to the file it describes. Refuses files outside the
+  `packageDirectories` of `sfdx-project.json`.
+- Deploy failures → quickfix ("Deploy failures"): `project.parse_deploy_result`
+  reads `result.files[]` entries with `state == "Failed"` (absolute path,
+  line, column, message — no ripgrep needed). File deploys use the `--json`
+  result directly; terminal `deploy`/`validate` fetch
+  `sf project deploy report --json` after a non-zero exit (best-effort; the
+  CLI does not track dry-runs).
+- `deploy_on_save` option: `BufWritePost` under any package directory runs
+  the file deploy.
+- `:Sf test method` (`<leader>stm`): runs `--tests Class.method` for the
+  `@IsTest`/`testMethod` method enclosing the cursor. Lookback only walks
+  contiguous annotation lines so a class-level `@IsTest` is never matched;
+  `@TestSetup` is rejected.
+- `:'<,'>Sf apex selection` (`<leader>se` in visual mode): runs the selected
+  lines as anonymous Apex via a temp `.apex` file. `:Sf` now accepts a range,
+  and actions may declare `mode = "x"` for visual keymaps.
+- Fixtures `deploy_failed.json` / `deploy_succeeded.json` captured from a
+  real `sf project deploy start --dry-run --json` against a broken class.
+  Live-verified: 5 compile errors → 5 quickfix entries with line:col.
+- Tests: `project_spec`, `apex_spec`, range/visual spec in `init_spec`
+  (48 specs total).
+
 ## v0.2.0 — 2026-08-28
 
 **Breaking:** Neovim 0.10+ required. Async execution for quick lookups,

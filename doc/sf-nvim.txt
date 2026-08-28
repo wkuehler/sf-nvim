@@ -64,6 +64,7 @@ All options with their defaults: >lua
         test_wait_time = 15,
         enable_default_keybinds = false,
         leader_prefix = "<leader>s",
+        deploy_on_save = false,
     })
 <
                                               *sf-nvim-config.test_results_dir*
@@ -90,12 +91,19 @@ enable_default_keybinds (boolean, default `false`)
 leader_prefix           (string, default `"<leader>s"`)
         Prefix for the default keymaps.
 
+                                                *sf-nvim-config.deploy_on_save*
+deploy_on_save          (boolean, default `false`)
+        On |BufWritePost| of any file under one of the project's package
+        directories (from `sfdx-project.json`), run |:Sf-project-file| for
+        it. Failures are reported through quickfix like a manual deploy.
+
 ==============================================================================
 5. COMMANDS                                                 *sf-nvim-commands*
 
                                                                          *:Sf*
-:Sf {group} {action}
+:[range]Sf {group} {action}
         Single entry point for every action. Both arguments tab-complete.
+        A [range] is passed to the action; only |:Sf-apex-selection| uses it.
 
 Test group ~
                                                             *:Sf-test-current*
@@ -103,6 +111,13 @@ Test group ~
         Run the tests in the Apex class in the current buffer (the file must
         have a `.cls` extension). When the run finishes, failures are loaded
         into quickfix. See |sf-nvim-quickfix|.
+
+                                                             *:Sf-test-method*
+:Sf test method
+        Run only the test method under the cursor (`--tests Class.method`).
+        The method is found by walking upward to the nearest `void name(`
+        declaration that is marked `@IsTest` (on its annotation lines) or
+        `testMethod`; `@TestSetup` and plain helpers are rejected.
 
                                                                 *:Sf-test-all*
 :Sf test all
@@ -121,6 +136,12 @@ Apex group ~
                                                             *:Sf-apex-execute*
 :Sf apex execute
         Run the current file as anonymous Apex (`sf apex run -f {file}`).
+
+                                                          *:Sf-apex-selection*
+:{range}Sf apex selection
+        Run the lines in {range} as anonymous Apex. Without a range, the last
+        visual selection (`'<`,`'>`) is used. The lines are written to a
+        temporary `.apex` file which is deleted after the run.
 
 Org group ~
                                                                 *:Sf-org-open*
@@ -150,12 +171,32 @@ Config group ~
         Pick from the authenticated Dev Hubs and set `target-dev-hub`.
 
 Project group ~
+                                                            *:Sf-project-file*
+:Sf project file
+        Deploy the current buffer's file in the background with
+        `sf project deploy start --source-dir {path} --json`. {path} is the
+        LWC or Aura bundle directory when the file is inside one, the
+        described file when the buffer is a `-meta.xml` companion, and the
+        file itself otherwise. The file must be under a package directory
+        listed in `sfdx-project.json`. Success is reported with
+        |vim.notify()|; failures fill quickfix (see |sf-nvim-deploy-quickfix|).
+
+                                                           *:Sf-project-fetch*
+:Sf project fetch
+        Retrieve the current file (or bundle) from the org with
+        `sf project retrieve start --source-dir {path}`, then |:checktime|.
+
                                                           *:Sf-project-deploy*
-:Sf project deploy      `sf project deploy start`
+:Sf project deploy
+        `sf project deploy start` in a terminal split. If it exits non-zero,
+        `sf project deploy report --json` is fetched and any failed
+        components are loaded into quickfix.
                                                         *:Sf-project-retrieve*
 :Sf project retrieve    `sf project retrieve start`
                                                         *:Sf-project-validate*
-:Sf project validate    `sf project deploy start --dry-run`
+:Sf project validate
+        `sf project deploy start --dry-run`, with the same quickfix
+        handling as |:Sf-project-deploy|.
 
 ==============================================================================
 6. KEYMAPS                                                   *sf-nvim-keymaps*
@@ -164,16 +205,20 @@ Installed only when |sf-nvim-config.enable_default_keybinds| is true. Shown
 with the default prefix `<leader>s`:
 
     <leader>stc     :Sf test current
+    <leader>stm     :Sf test method
     <leader>sta     :Sf test all
     <leader>stl     :Sf test load
     <leader>stx     :Sf test clear
-    <leader>se      :Sf apex execute
+    <leader>se      :Sf apex execute            (normal mode)
+    <leader>se      :Sf apex selection          (visual mode)
     <leader>soo     :Sf org open
     <leader>sol     :Sf org list
     <leader>soi     :Sf org info
     <leader>soc     :Sf org create
     <leader>sco     :Sf config org
     <leader>sch     :Sf config hub
+    <leader>spf     :Sf project file
+    <leader>spF     :Sf project fetch
     <leader>spd     :Sf project deploy
     <leader>spr     :Sf project retrieve
     <leader>spv     :Sf project validate
@@ -197,6 +242,16 @@ entry with:
 A summary is shown with |vim.notify()|. Failures whose class file could not be
 found are counted in that summary rather than dropped. Use |:cnext| and
 |:cprevious| to move between failures.
+
+                                                     *sf-nvim-deploy-quickfix*
+Deploy failures ~
+
+`sf project deploy ... --json` lists every component in `result.files[]`.
+Entries with `state == "Failed"` become quickfix entries (title
+"Deploy failures") using their absolute `filePath`, `lineNumber`,
+`columnNumber`, and `error`; components without a location (e.g. a custom
+field) point at line 1 of their metadata file. The quickfix window opens
+automatically when |sf-nvim-config.auto_open_quickfix| is set.
 
 ==============================================================================
 8. LUA API                                                       *sf-nvim-api*
@@ -222,8 +277,11 @@ Module functions (all take no arguments unless noted):
 
     require("sf-nvim.apex")
         .run_test()             tests for the current class
+        .run_test_method()      test method under the cursor
         .run_all_tests()
         .execute_script()       current file as anonymous Apex
+        .execute_selection({range})
+        .find_test_method({lines}, {line}) -> name|nil
         .clear_test_results()
 
     require("sf-nvim.org")
@@ -233,6 +291,11 @@ Module functions (all take no arguments unless noted):
 
     require("sf-nvim.project")
         .deploy() .retrieve() .validate()
+        .deploy_file({path}) .retrieve_file({path})   default: current buffer
+        .set_deploy_on_save({enable})
+        .parse_deploy_result({json}) -> qf_items, summary
+        .report_deploy({json}, {label}) -> had_failures
+        .source_dirs({cwd}) .is_source_file({path}) .source_path_for({path})
 
     require("sf-nvim.set-config")
         .set_target_org() .set_target_dev_hub()

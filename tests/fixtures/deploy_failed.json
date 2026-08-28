@@ -1,0 +1,60 @@
+{
+  "status": 1,
+  "result": {
+    "checkOnly": true,
+    "done": true,
+    "id": "0AfXXXXXXXXXXXXXXX",
+    "numberComponentErrors": 4,
+    "numberComponentsDeployed": 1,
+    "numberComponentsTotal": 5,
+    "status": "Failed",
+    "success": false,
+    "files": [
+      {
+        "fullName": "SfNvimProbe",
+        "type": "ApexClass",
+        "state": "Failed",
+        "problemType": "Error",
+        "filePath": "/home/dev/my-project/force-app/main/default/classes/SfNvimProbe.cls",
+        "lineNumber": 4,
+        "columnNumber": 9,
+        "error": "Method does not exist or incorrect signature: void undefinedThing() from the type ResourceHeroApp.SfNvimProbe (4:9)"
+      },
+      {
+        "fullName": "SfNvimProbe",
+        "type": "ApexClass",
+        "state": "Failed",
+        "problemType": "Error",
+        "filePath": "/home/dev/my-project/force-app/main/default/classes/SfNvimProbe.cls",
+        "lineNumber": 3,
+        "columnNumber": 26,
+        "error": "Invalid type: an (3:26)"
+      },
+      {
+        "fullName": "SfNvimProbe",
+        "type": "ApexClass",
+        "state": "Failed",
+        "problemType": "Error",
+        "filePath": "/home/dev/my-project/force-app/main/default/classes/SfNvimProbe.cls",
+        "lineNumber": 3,
+        "columnNumber": 22,
+        "error": "Unexpected token 'not'. (3:22)"
+      },
+      {
+        "fullName": "Account.Foo__c",
+        "type": "CustomField",
+        "state": "Failed",
+        "problemType": "Error",
+        "filePath": "/home/dev/my-project/force-app/main/default/objects/Account/fields/Foo__c.field-meta.xml",
+        "error": "Cannot change type of a custom field"
+      },
+      {
+        "fullName": "GoodClass",
+        "type": "ApexClass",
+        "state": "Changed",
+        "filePath": "/home/dev/my-project/force-app/main/default/classes/GoodClass.cls"
+      }
+    ]
+  },
+  "warnings": []
+}

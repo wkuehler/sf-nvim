@@ -1,0 +1,22 @@
+{
+  "status": 0,
+  "result": {
+    "checkOnly": false,
+    "done": true,
+    "id": "0AfYYYYYYYYYYYYYYY",
+    "numberComponentErrors": 0,
+    "numberComponentsDeployed": 1,
+    "numberComponentsTotal": 1,
+    "status": "Succeeded",
+    "success": true,
+    "files": [
+      {
+        "fullName": "GoodClass",
+        "type": "ApexClass",
+        "state": "Changed",
+        "filePath": "/home/dev/my-project/force-app/main/default/classes/GoodClass.cls"
+      }
+    ]
+  },
+  "warnings": []
+}

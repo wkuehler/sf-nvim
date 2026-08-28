@@ -63,6 +63,48 @@ but built and documented as a single-user tool.
       Process: move CHANGELOG *Unreleased* under a version heading, tag,
       `gh release create` with that section as notes.
 
+## v0.3.0 — edit/deploy loop (2026-08-28)
+
+- [x] **Deploy / retrieve current file.** `:Sf project file` / `fetch`,
+      `--source-dir` with LWC/Aura bundle and `-meta.xml` resolution; async.
+- [x] **Deploy errors → quickfix.** `project.parse_deploy_result` over
+      `result.files[]` (`state == "Failed"`, absolute `filePath`, line, col).
+      File deploys feed it directly; terminal deploys fetch
+      `sf project deploy report --json` after a non-zero exit.
+- [x] **Deploy on save.** `deploy_on_save = true`, BufWritePost under any
+      `sfdx-project.json` package directory.
+- [x] **Run test method under cursor.** `:Sf test method`,
+      `apex.find_test_method` (contiguous-annotation lookback, rejects
+      `@TestSetup` and class-level `@IsTest`).
+- [x] **Anonymous Apex from a selection.** `:'<,'>Sf apex selection`;
+      `:Sf` accepts a range; actions may declare `mode = "x"`.
+
+## Backlog — to review (suggested 2026-08-28)
+
+Ranked roughly by how often a Salesforce dev would hit the gap.
+
+- [ ] **Statusline provider.** `require("sf-nvim").status()` → target org
+      alias, cached from `sf config get target-org --json`, refreshed after
+      `:Sf config org`.
+- [ ] **Debug logs.** `sf apex list log` → picker → `sf apex get log -i` in
+      a scratch buffer (`filetype=apexlog`); "run anonymous Apex then open
+      its log" combo. Biggest VS Code → Neovim gap.
+- [ ] **SOQL runner.** Buffer or selection via `sf data query --json`,
+      rendered as a table in a split; `.soql` files and selections in Apex.
+- [ ] **Code coverage.** `--code-coverage --json` per-class line lists →
+      signs/extmarks; `:Sf test coverage` toggle.
+- [ ] **Org lifecycle.** `sf org login web` (alias prompt), delete scratch
+      org (confirm), `org open` picker for a chosen org.
+- [ ] **Metadata generators.** `sf apex generate class/trigger`,
+      `sf lightning generate component`; open the created file.
+- [ ] **Filetype detection.** `ftdetect/` for `.cls`, `.trigger`, `.apex`,
+      `.soql` — Neovim ships none; prerequisite for ft-based autocmds.
+- [ ] **`plugin/sf-nvim.lua`** so `:Sf` and `:checkhealth` exist without an
+      explicit `setup()`.
+- [ ] **Rerun failed tests** from the last results file (`:Sf test failed`).
+- [ ] **LSP guidance** in docs: `apex_ls` via mason + nvim-lspconfig.
+- [ ] packer / vim-plug install examples.
+
 ## Notes
 
 - 2026-08-28: `utils/runner.lua` rewritten as the single execution seam

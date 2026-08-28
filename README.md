@@ -48,6 +48,7 @@ require("sf-nvim").setup({
     test_wait_time = 15,                 -- minutes passed to `sf apex run test -w`
     enable_default_keybinds = false,     -- install the keymaps listed below
     leader_prefix = "<leader>s",         -- prefix for those keymaps
+    deploy_on_save = false,              -- deploy a source file to the target org on :w
 })
 ```
 
@@ -60,17 +61,21 @@ Everything is available as `:Sf <group> <action>` with tab completion:
 | Command | What it does |
 |---|---|
 | `:Sf test current` | Run tests for the current `.cls`; failures go to quickfix |
+| `:Sf test method` | Run only the `@IsTest` method under the cursor |
 | `:Sf test all` | Run the whole Apex test suite |
 | `:Sf test load` | Load the most recent saved results into quickfix |
 | `:Sf test clear` | Delete saved test results (asks first) |
 | `:Sf apex execute` | Run the current file as anonymous Apex |
+| `:'<,'>Sf apex selection` | Run the selected lines as anonymous Apex |
 | `:Sf org open` | Open the target org in a browser |
 | `:Sf org list` | `sf org list` |
 | `:Sf org info` | `sf org display` |
 | `:Sf org create` | Create a scratch org: pick a `*-scratch-def.json`, enter days and alias |
 | `:Sf config org` | Set `target-org` from a picker of authenticated orgs |
 | `:Sf config hub` | Set `target-dev-hub` from a picker of Dev Hubs |
-| `:Sf project deploy` | `sf project deploy start` |
+| `:Sf project file` | Deploy the current file (or its LWC/Aura bundle); errors go to quickfix |
+| `:Sf project fetch` | Retrieve the current file (or bundle) from the org |
+| `:Sf project deploy` | `sf project deploy start`; on failure, errors go to quickfix |
 | `:Sf project retrieve` | `sf project retrieve start` |
 | `:Sf project validate` | `sf project deploy start --dry-run` |
 
@@ -83,16 +88,19 @@ With `enable_default_keybinds = true` and the default `leader_prefix = "<leader>
 | Key | Command |
 |---|---|
 | `<leader>stc` | `:Sf test current` |
+| `<leader>stm` | `:Sf test method` |
 | `<leader>sta` | `:Sf test all` |
 | `<leader>stl` | `:Sf test load` |
 | `<leader>stx` | `:Sf test clear` |
-| `<leader>se`  | `:Sf apex execute` |
+| `<leader>se`  | `:Sf apex execute` (normal) / `:Sf apex selection` (visual) |
 | `<leader>soo` | `:Sf org open` |
 | `<leader>sol` | `:Sf org list` |
 | `<leader>soi` | `:Sf org info` |
 | `<leader>soc` | `:Sf org create` |
 | `<leader>sco` | `:Sf config org` |
 | `<leader>sch` | `:Sf config hub` |
+| `<leader>spf` | `:Sf project file` |
+| `<leader>spF` | `:Sf project fetch` |
 | `<leader>spd` | `:Sf project deploy` |
 | `<leader>spr` | `:Sf project retrieve` |
 | `<leader>spv` | `:Sf project validate` |
@@ -102,14 +110,24 @@ To define your own instead, leave `enable_default_keybinds` off and map to the
 
 ## Workflow
 
-**Tests.** Open a test class and run `:Sf test current`. The run streams in a
-terminal split; press ENTER when it finishes. Failures (including compile
+**Edit → deploy.** `:Sf project file` pushes just the file you're in (for LWC
+and Aura, the whole bundle) in the background and reports the result. Compile
+errors land in quickfix with line and column. Set `deploy_on_save = true` to do
+this automatically on every `:w` of a file under a package directory.
+
+**Tests.** Open a test class and run `:Sf test current`, or put the cursor in
+one `@IsTest` method and run `:Sf test method`. The run streams in a terminal
+split; press ENTER when it finishes. Failures (including compile
 failures) are loaded into quickfix with file, line, column and message — `:cn` /
 `:cp` to jump between them. Results are also saved as JSON under
 `test_results_dir`, so `:Sf test load` can reload the latest run later.
 
 **Deploy.** `:Sf project validate` for a dry run, check the output, then
-`:Sf project deploy`.
+`:Sf project deploy`. If either fails, the failed components are loaded into
+quickfix from `sf project deploy report`.
+
+**Anonymous Apex.** `:Sf apex execute` runs the whole file; select some lines
+and `:'<,'>Sf apex selection` (or `<leader>se` in visual mode) runs just those.
 
 **Scratch orgs.** `:Sf org create` finds every `config/**/*-scratch-def.json`
 in the project and prompts for duration and alias. `:Sf config org` switches

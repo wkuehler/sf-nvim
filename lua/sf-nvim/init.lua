@@ -15,6 +15,7 @@ M.setconfig = require("sf-nvim.set-config")
 ---@field test_wait_time integer        minutes to wait for `sf apex run test`
 ---@field enable_default_keybinds boolean
 ---@field leader_prefix string          prefix for default keybinds
+---@field deploy_on_save boolean        deploy a source file to the target org on :write
 
 ---@type SfConfig
 local default_config = {
@@ -23,6 +24,7 @@ local default_config = {
 	test_wait_time = 15,
 	enable_default_keybinds = false,
 	leader_prefix = "<leader>s",
+	deploy_on_save = false,
 }
 
 ---@type SfConfig
@@ -32,9 +34,10 @@ M.config = vim.deepcopy(default_config)
 -- Action table: single source of truth for :Sf subcommands and keymaps
 -- -------------------------------------------------------------
 ---@class SfAction
----@field fn fun()
+---@field fn fun(range?: {integer, integer})  range is passed when :Sf is given one
 ---@field desc string
 ---@field key string   suffix appended to leader_prefix
+---@field mode? string keymap mode (default "n"; "x" for visual)
 
 ---@type table<string, table<string, SfAction>>
 M.actions = {
@@ -60,6 +63,13 @@ M.actions = {
 				M.apex.clear_test_results()
 			end,
 		},
+		method = {
+			key = "tm",
+			desc = "Run the test method under the cursor",
+			fn = function()
+				M.apex.run_test_method()
+			end,
+		},
 		load = {
 			key = "tl",
 			desc = "Load latest test results into quickfix",
@@ -74,6 +84,14 @@ M.actions = {
 			desc = "Execute current file as anonymous Apex",
 			fn = function()
 				M.apex.execute_script()
+			end,
+		},
+		selection = {
+			key = "e",
+			mode = "x",
+			desc = "Execute selection as anonymous Apex",
+			fn = function(range)
+				M.apex.execute_selection(range)
 			end,
 		},
 	},
@@ -145,6 +163,20 @@ M.actions = {
 				M.project.validate()
 			end,
 		},
+		file = {
+			key = "pf",
+			desc = "Deploy current file",
+			fn = function()
+				M.project.deploy_file()
+			end,
+		},
+		fetch = {
+			key = "pF",
+			desc = "Retrieve current file",
+			fn = function()
+				M.project.retrieve_file()
+			end,
+		},
 	},
 }
 
@@ -180,7 +212,11 @@ local function sf_command(opts)
 		)
 		return
 	end
-	a.fn()
+	if opts.range and opts.range > 0 then
+		a.fn({ opts.line1, opts.line2 })
+	else
+		a.fn()
+	end
 end
 
 local function sf_complete(arglead, cmdline, _)
@@ -204,6 +240,7 @@ end
 local function setup_commands()
 	vim.api.nvim_create_user_command("Sf", sf_command, {
 		nargs = "+",
+		range = true,
 		complete = sf_complete,
 		desc = "Salesforce CLI actions (:Sf <group> <action>)",
 	})
@@ -216,7 +253,9 @@ local function setup_keybinds()
 	local prefix = M.config.leader_prefix
 	for _, group in pairs(M.actions) do
 		for _, action in pairs(group) do
-			vim.keymap.set("n", prefix .. action.key, action.fn, { desc = "Sf: " .. action.desc })
+			vim.keymap.set(action.mode or "n", prefix .. action.key, function()
+				action.fn()
+			end, { desc = "Sf: " .. action.desc })
 		end
 	end
 end
@@ -240,6 +279,7 @@ function M.setup(opts)
 	if M.config.enable_default_keybinds then
 		setup_keybinds()
 	end
+	M.project.set_deploy_on_save(M.config.deploy_on_save)
 end
 
 return M

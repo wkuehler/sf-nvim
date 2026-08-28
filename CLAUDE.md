@@ -70,8 +70,9 @@ All process execution goes through `utils/runner.lua`, which has three styles:
 `Outcome == "Fail"/"CompileFail"`, pulls the first `line N, column M` out of
 `StackTrace`, and resolves `ApexClass.Name` to a path with ripgrep. `parse_test_results`
 takes an injectable file resolver so it can be unit-tested; failures whose class file
-isn't found are reported in the summary notification rather than dropped. This module
-and `set-config.build_org_items` are the two places coupled to the CLI's JSON shape.
+isn't found are reported in the summary notification rather than dropped. This module,
+`project.parse_deploy_result` (`result.files[]`, `state == "Failed"`), and
+`set-config.build_org_items` are the three places coupled to the CLI's JSON shape.
 
 ## Conventions and gotchas
 

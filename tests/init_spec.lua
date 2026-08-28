@@ -19,7 +19,7 @@ describe("sf-nvim.setup", function()
 		assert.is_not_nil(cmds.Sf)
 
 		assert.same({ "apex", "config", "org", "project", "test" }, vim.fn.getcompletion("Sf ", "cmdline"))
-		assert.same({ "all", "clear", "current", "load" }, vim.fn.getcompletion("Sf test ", "cmdline"))
+		assert.same({ "all", "clear", "current", "load", "method" }, vim.fn.getcompletion("Sf test ", "cmdline"))
 		assert.same({ "test" }, vim.fn.getcompletion("Sf te", "cmdline"))
 	end)
 
@@ -44,5 +44,26 @@ describe("sf-nvim.setup", function()
 			end
 		end
 		assert.is_true(found)
+	end)
+
+	it("passes a range to the action when :Sf is given one, and visual actions map in x mode", function()
+		sf.setup({ enable_default_keybinds = true })
+		local got_range = "unset"
+		local orig = sf.actions.apex.selection.fn
+		sf.actions.apex.selection.fn = function(r)
+			got_range = r
+		end
+		vim.cmd("enew")
+		vim.api.nvim_buf_set_lines(0, 0, -1, false, { "a", "b", "c" })
+		vim.cmd("2,3Sf apex selection")
+		assert.same({ 2, 3 }, got_range)
+		vim.cmd("Sf apex selection")
+		assert.is_nil(got_range)
+		sf.actions.apex.selection.fn = orig
+		vim.cmd("bwipeout!")
+
+		assert.equals("", vim.fn.maparg("<leader>se", "x", false, true).rhs or "")
+		assert.truthy(vim.fn.maparg("<leader>se", "x", false, true).callback)
+		assert.truthy(vim.fn.maparg("<leader>se", "n", false, true).callback)
 	end)
 end)
