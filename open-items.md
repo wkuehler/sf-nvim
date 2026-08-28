@@ -94,10 +94,16 @@ Ranked roughly by how often a Salesforce dev would hit the gap.
       subquery summaries, CLI error with caret.
 - [ ] **Code coverage.** `--code-coverage --json` per-class line lists →
       signs/extmarks; `:Sf test coverage` toggle.
-- [ ] **Org lifecycle.** `sf org login web` (alias prompt), delete scratch
-      org (confirm), `org open` picker for a chosen org.
-- [ ] **Metadata generators.** `sf apex generate class/trigger`,
-      `sf lightning generate component`; open the created file.
+- [ ] **Org lifecycle.** `sf org login web` (alias prompt, `oa`), delete
+      scratch org (confirm, `ox`), `org open` picker for a chosen org (`oO`),
+      `org list limits` (`oL`).
+- [ ] **Metadata generators.** `sf template generate apex class/trigger`,
+      `lightning component` under a `g` prefix (`gc`/`gt`/`gl`); open the
+      created file.
+- [ ] **Deploy/retrieve preview.** `sf project deploy preview` /
+      `retrieve preview` as a pre-flight (`pP`?).
+- [x] **Keymap review.** (2026-08-28) Two-key prefix for every group,
+      `M.groups` + which-key labels, descriptions tightened.
 - [x] **Filetype detection.** (2026-08-28, v0.4.0) `ftdetect/sf-nvim.lua`;
       `.cls`/`.trigger` claimed only inside an SFDX project.
 - [ ] **`plugin/sf-nvim.lua`** so `:Sf` and `:checkhealth` exist without an

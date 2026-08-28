@@ -265,19 +265,22 @@ Project group ~
 6. KEYMAPS                                                   *sf-nvim-keymaps*
 
 Installed only when |sf-nvim-config.enable_default_keybinds| is true. Shown
-with the default prefix `<leader>s`:
+with the default prefix `<leader>s`. Keys are grouped by a prefix letter:
+`t` tests, `a` anonymous Apex, `l` debug logs, `q` SOQL, `o` org, `c` config,
+`p` project. When which-key.nvim is installed the groups are labelled from
+`require("sf-nvim").groups` (a `name -> {prefix, label}` table).
 
     <leader>stc     :Sf test current
     <leader>stm     :Sf test method
     <leader>sta     :Sf test all
     <leader>stl     :Sf test load
     <leader>stx     :Sf test clear
-    <leader>se      :Sf apex execute            (normal mode)
-    <leader>se      :Sf apex selection          (visual mode)
-    <leader>sd      :Sf apex debug              (normal mode)
-    <leader>sd      :Sf apex debugselection     (visual mode)
+    <leader>sae     :Sf apex execute            (normal mode)
+    <leader>sae     :Sf apex selection          (visual mode)
+    <leader>sad     :Sf apex debug              (normal mode)
+    <leader>sad     :Sf apex debugselection     (visual mode)
     <leader>sll     :Sf log list
-    <leader>slr     :Sf log latest
+    <leader>slL     :Sf log latest
     <leader>slt     :Sf log tail
     <leader>sls     :Sf log show
     <leader>sqb     :Sf soql buffer

@@ -50,7 +50,7 @@ describe("sf-nvim.setup", function()
 		sf.setup({ enable_default_keybinds = true, leader_prefix = "<leader>z" })
 		local found = false
 		for _, m in ipairs(vim.api.nvim_get_keymap("n")) do
-			if m.desc == "Sf: Run tests for current class" then
+			if m.desc == "Sf: Run tests in current Apex class" then
 				found = true
 			end
 		end
@@ -73,8 +73,8 @@ describe("sf-nvim.setup", function()
 		sf.actions.apex.selection.fn = orig
 		vim.cmd("bwipeout!")
 
-		assert.equals("", vim.fn.maparg("<leader>se", "x", false, true).rhs or "")
-		assert.truthy(vim.fn.maparg("<leader>se", "x", false, true).callback)
-		assert.truthy(vim.fn.maparg("<leader>se", "n", false, true).callback)
+		assert.equals("", vim.fn.maparg("<leader>sae", "x", false, true).rhs or "")
+		assert.truthy(vim.fn.maparg("<leader>sae", "x", false, true).callback)
+		assert.truthy(vim.fn.maparg("<leader>sae", "n", false, true).callback)
 	end)
 end)

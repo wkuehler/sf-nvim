@@ -96,7 +96,11 @@ Full reference: `:help sf-nvim`.
 
 ## Default keybindings
 
-With `enable_default_keybinds = true` and the default `leader_prefix = "<leader>s"`:
+With `enable_default_keybinds = true` and the default `leader_prefix = "<leader>s"`.
+Keys are grouped by a prefix letter — `t` tests, `a` anonymous Apex, `l` debug
+logs, `q` SOQL, `o` org, `c` config, `p` project. If
+[which-key.nvim](https://github.com/folke/which-key.nvim) is installed, those
+groups are labelled automatically (`require("sf-nvim").groups`).
 
 | Key | Command |
 |---|---|
@@ -105,10 +109,10 @@ With `enable_default_keybinds = true` and the default `leader_prefix = "<leader>
 | `<leader>sta` | `:Sf test all` |
 | `<leader>stl` | `:Sf test load` |
 | `<leader>stx` | `:Sf test clear` |
-| `<leader>se`  | `:Sf apex execute` (normal) / `:Sf apex selection` (visual) |
-| `<leader>sd`  | `:Sf apex debug` (normal) / `:Sf apex debugselection` (visual) |
+| `<leader>sae`  | `:Sf apex execute` (normal) / `:Sf apex selection` (visual) |
+| `<leader>sad`  | `:Sf apex debug` (normal) / `:Sf apex debugselection` (visual) |
 | `<leader>sll` | `:Sf log list` |
-| `<leader>slr` | `:Sf log latest` |
+| `<leader>slL` | `:Sf log latest` |
 | `<leader>slt` | `:Sf log tail` |
 | `<leader>sls` | `:Sf log show` |
 | `<leader>sqb` | `:Sf soql buffer` |
@@ -148,7 +152,7 @@ failures) are loaded into quickfix with file, line, column and message — `:cn`
 quickfix from `sf project deploy report`.
 
 **Anonymous Apex.** `:Sf apex execute` runs the whole file in a terminal split;
-select some lines and `:'<,'>Sf apex selection` (or `<leader>se` in visual mode)
+select some lines and `:'<,'>Sf apex selection` (or `<leader>sae` in visual mode)
 runs just those. `:Sf apex debug` runs in the background instead and opens the
 result in a `sf://apex-run` buffer: a one-line verdict (success, compile error
 with line/column, or the runtime exception and stack) followed by the full

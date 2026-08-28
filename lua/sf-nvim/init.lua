@@ -48,7 +48,7 @@ M.actions = {
 	test = {
 		current = {
 			key = "tc",
-			desc = "Run tests for current class",
+			desc = "Run tests in current Apex class",
 			fn = function()
 				M.apex.run_test()
 			end,
@@ -62,7 +62,7 @@ M.actions = {
 		},
 		clear = {
 			key = "tx",
-			desc = "Clear test results directory",
+			desc = "Delete saved test result files",
 			fn = function()
 				M.apex.clear_test_results()
 			end,
@@ -84,14 +84,14 @@ M.actions = {
 	},
 	apex = {
 		execute = {
-			key = "e",
+			key = "ae",
 			desc = "Execute current file as anonymous Apex",
 			fn = function()
 				M.apex.execute_script()
 			end,
 		},
 		selection = {
-			key = "e",
+			key = "ae",
 			mode = "x",
 			desc = "Execute selection as anonymous Apex",
 			fn = function(range)
@@ -99,14 +99,14 @@ M.actions = {
 			end,
 		},
 		debug = {
-			key = "d",
+			key = "ad",
 			desc = "Run current file as anonymous Apex and show the log",
 			fn = function()
 				M.logs.debug()
 			end,
 		},
 		debugselection = {
-			key = "d",
+			key = "ad",
 			mode = "x",
 			desc = "Run selection as anonymous Apex and show the log",
 			fn = function(range)
@@ -123,7 +123,7 @@ M.actions = {
 			end,
 		},
 		latest = {
-			key = "lr",
+			key = "lL",
 			desc = "Open the most recent debug log",
 			fn = function()
 				M.logs.latest()
@@ -131,14 +131,14 @@ M.actions = {
 		},
 		tail = {
 			key = "lt",
-			desc = "Toggle background debug log tail (creates a trace flag)",
+			desc = "Toggle debug log tail (background)",
 			fn = function()
 				M.logs.tail()
 			end,
 		},
 		show = {
 			key = "ls",
-			desc = "Show captured debug logs",
+			desc = "Open the tail buffer",
 			fn = function()
 				M.logs.show()
 			end,
@@ -162,7 +162,7 @@ M.actions = {
 		},
 		prompt = {
 			key = "qq",
-			desc = "Prompt for a SOQL query",
+			desc = "Run a SOQL query from a prompt",
 			fn = function()
 				M.soql.query_prompt()
 			end,
@@ -178,21 +178,21 @@ M.actions = {
 		},
 		list = {
 			key = "ol",
-			desc = "List orgs",
+			desc = "List authenticated orgs",
 			fn = function()
 				M.org.list()
 			end,
 		},
 		info = {
 			key = "oi",
-			desc = "Display org info",
+			desc = "Show target org details",
 			fn = function()
 				M.org.display()
 			end,
 		},
 		create = {
 			key = "oc",
-			desc = "Create scratch org",
+			desc = "Create scratch org from a definition file",
 			fn = function()
 				M.org.create_scratch_org()
 			end,
@@ -201,14 +201,14 @@ M.actions = {
 	config = {
 		org = {
 			key = "co",
-			desc = "Set target-org",
+			desc = "Pick target org",
 			fn = function()
 				M.setconfig.set_target_org()
 			end,
 		},
 		hub = {
 			key = "ch",
-			desc = "Set target-dev-hub",
+			desc = "Pick Dev Hub org",
 			fn = function()
 				M.setconfig.set_target_dev_hub()
 			end,
@@ -217,21 +217,21 @@ M.actions = {
 	project = {
 		deploy = {
 			key = "pd",
-			desc = "Deploy project",
+			desc = "Deploy whole project to org",
 			fn = function()
 				M.project.deploy()
 			end,
 		},
 		retrieve = {
 			key = "pr",
-			desc = "Retrieve from org",
+			desc = "Retrieve whole project from org",
 			fn = function()
 				M.project.retrieve()
 			end,
 		},
 		validate = {
 			key = "pv",
-			desc = "Validate deployment (dry run)",
+			desc = "Validate project deploy (no changes)",
 			fn = function()
 				M.project.validate()
 			end,
@@ -340,6 +340,21 @@ end
 -- -------------------------------------------------------------
 -- Default keybindings
 -- -------------------------------------------------------------
+---Keymap prefix letter and label for each group in `M.actions`. Every
+---default keymap for a group starts with `leader_prefix .. prefix`; the label
+---is registered with which-key (if installed) so `<leader>s` shows a menu of
+---groups. Kept separate from `M.actions` so its entries stay pure actions.
+---@type table<string, {prefix: string, label: string}>
+M.groups = {
+	test = { prefix = "t", label = "Tests" },
+	apex = { prefix = "a", label = "Anonymous Apex" },
+	log = { prefix = "l", label = "Debug logs" },
+	soql = { prefix = "q", label = "SOQL" },
+	org = { prefix = "o", label = "Org" },
+	config = { prefix = "c", label = "Config" },
+	project = { prefix = "p", label = "Project" },
+}
+
 local function setup_keybinds()
 	local prefix = M.config.leader_prefix
 	for _, group in pairs(M.actions) do
@@ -348,6 +363,14 @@ local function setup_keybinds()
 				action.fn()
 			end, { desc = "Sf: " .. action.desc })
 		end
+	end
+	local ok, wk = pcall(require, "which-key")
+	if ok and type(wk.add) == "function" then
+		local specs = { { prefix, group = "Salesforce", mode = { "n", "x" } } }
+		for _, g in pairs(M.groups) do
+			table.insert(specs, { prefix .. g.prefix, group = g.label, mode = { "n", "x" } })
+		end
+		wk.add(specs)
 	end
 end
 

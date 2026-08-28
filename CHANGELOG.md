@@ -5,6 +5,21 @@ Progress log for sf-nvim. One entry per milestone (a roadmap item from
 it. Versions follow semver; lazy.nvim users can pin with `version = "*"` or a
 tag.
 
+## Unreleased
+
+### 2026-08-28 — Keymap review (breaking)
+- Anonymous Apex keys moved under an `a` prefix so every group is a two-key
+  prefix: `<leader>se` → `<leader>sae`, `<leader>sd` → `<leader>sad` (normal
+  and visual). `:Sf log latest` moved `<leader>slr` → `<leader>slL` (shift =
+  "the latest one", matching `spf`/`spF`).
+- `require("sf-nvim").groups`: `name -> {prefix, label}`; registered with
+  which-key.nvim when present so `<leader>s` shows a labelled menu. Test
+  asserts every action key starts with its group prefix and has a desc.
+- Descriptions tightened across the board (e.g. "Pick target org", "Deploy
+  whole project to org", "Toggle debug log tail (background)").
+- Reviewed against `sf commands`; reserved prefixes for roadmap items:
+  `g` generators, `oa`/`ox`/`oO`/`oL` org login/delete/open-picker/limits.
+
 ## v0.4.1 — 2026-08-28
 
 Background debug log tail, `:Sf log show`, and a statusline provider.
